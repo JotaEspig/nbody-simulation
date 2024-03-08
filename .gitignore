@@ -16,7 +16,8 @@ logs/
 .vscode/
 .clangd/
 .cache/
-external/
+external/include/axolote
+external/lib/axolote
 
 # files
 compile_commands.json
