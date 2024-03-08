@@ -135,7 +135,7 @@ void App::main_loop(const char *json_filename)
 
     // Scene object
     std::shared_ptr<axolote::Scene> scene{new axolote::Scene{}};
-    scene->camera.pos = glm::vec3{0.0f, 10.0f, 0.0f};
+    scene->camera.pos = glm::vec3{0.0f, 100.0f, 0.0f};
     scene->camera.orientation = glm::normalize(glm::vec3{.1f, -1.0f, 0.0f});
     scene->camera.speed = 80.0f;
     scene->camera.sensitivity = 10000.0f;
