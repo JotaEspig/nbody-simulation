@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.5...3.27.5)
-project(solar-system-3d)
+project(nbody-simulation)
 
 # CMake settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -42,16 +42,16 @@ set(
 )
 
 # Adding executables
-add_executable(solar-system-3d ${SOURCE_FILES})
+add_executable(nbody-simulation ${SOURCE_FILES})
 
 # Libraries
 target_link_directories(
-    solar-system-3d
+    nbody-simulation
     PRIVATE
     ${CMAKE_SOURCE_DIR}/external/lib/axolote
 )
 target_link_libraries(
-    solar-system-3d
+    nbody-simulation
     PRIVATE
     axolote
     ${OPENGL_LIBRARIES} glfw stdc++
@@ -59,7 +59,7 @@ target_link_libraries(
 
 # Header files
 target_include_directories(
-    solar-system-3d
+    nbody-simulation
     PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/external/include
