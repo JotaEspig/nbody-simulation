@@ -18,12 +18,15 @@ public:
     CelestialBodySystem() = default;
     ~CelestialBodySystem() = default;
 
+    void
+    setup_using_json(axolote::gl::Shader shader_program, const char *filename);
     std::shared_ptr<CelestialBody> add_celestial_body(
         double mass, glm::vec3 pos, glm::vec3 vel,
         axolote::gl::Shader shader_program
     );
     void update(double dt);
+    std::vector<std::shared_ptr<CelestialBody>> celestial_bodies() const;
 
 private:
-    std::vector<std::shared_ptr<CelestialBody>> celestial_bodies;
+    std::vector<std::shared_ptr<CelestialBody>> _celestial_bodies;
 };
