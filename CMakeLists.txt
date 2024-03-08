@@ -37,7 +37,7 @@ set(
     SOURCE_FILES
     ${SOURCE_DIR}/app.cpp
     ${SOURCE_DIR}/celestial_body.cpp
-    ${SOURCE_DIR}/solar_system.cpp
+    ${SOURCE_DIR}/celestial_body_system.cpp
     ${SOURCE_DIR}/main.cpp
 )
 

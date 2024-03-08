@@ -5,18 +5,21 @@
 
 #include <axolote/engine.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <celestial_body.hpp>
 
-class SolarSystem
+class CelestialBodySystem
 {
 public:
-    SolarSystem() = default;
-    ~SolarSystem() = default;
+    std::shared_ptr<axolote::Model> default_body_model{new axolote::Model{
+        "./resources/models/sphere/sphere.obj", glm::vec3{1.0f, 1.0f, 1.0f}
+    }};
+
+    CelestialBodySystem() = default;
+    ~CelestialBodySystem() = default;
 
     std::shared_ptr<CelestialBody> add_celestial_body(
-        double mass, glm::vec3 pos, glm::vec3 vel, glm::vec3 color,
+        double mass, glm::vec3 pos, glm::vec3 vel,
         axolote::gl::Shader shader_program
     );
     void update(double dt);

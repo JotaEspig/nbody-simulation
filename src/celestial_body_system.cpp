@@ -1,10 +1,11 @@
 #include <memory>
-#include <solar_system.hpp>
 
 #include <axolote/object3d.hpp>
 
-std::shared_ptr<CelestialBody> SolarSystem::add_celestial_body(
-    double mass, glm::vec3 pos, glm::vec3 vel, glm::vec3 color,
+#include <celestial_body_system.hpp>
+
+std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
+    double mass, glm::vec3 pos, glm::vec3 vel,
     axolote::gl::Shader shader_program
 )
 {
@@ -13,12 +14,10 @@ std::shared_ptr<CelestialBody> SolarSystem::add_celestial_body(
     mat = glm::translate(mat, pos);
 
     // Create body
-    std::shared_ptr<CelestialBody> body{new CelestialBody{mass, vel}};
-    auto bodyobj = std::make_shared<axolote::Object3D>(
-        "./resources/models/sphere/sphere.obj", color, mat
-    );
-    body->pos = pos;
-    body->add_object(bodyobj);
+    std::shared_ptr<CelestialBody> body{new CelestialBody{mass, vel, pos}};
+    axolote::Object3D obj{mat};
+    obj.model = default_body_model;
+    body->add_object(obj);
     body->bind_shader_at(0, shader_program);
 
     // Add to list
@@ -27,7 +26,7 @@ std::shared_ptr<CelestialBody> SolarSystem::add_celestial_body(
     return body;
 }
 
-void SolarSystem::update(double dt)
+void CelestialBodySystem::update(double dt)
 {
     for (auto body0 : celestial_bodies)
     {

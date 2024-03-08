@@ -10,7 +10,7 @@
 
 #include <app.hpp>
 #include <celestial_body.hpp>
-#include <solar_system.hpp>
+#include <celestial_body_system.hpp>
 
 void App::process_input(float delta_t)
 {
@@ -38,11 +38,7 @@ void App::main_loop()
     );
 
     shader_program.activate();
-    shader_program.set_uniform_float("ambient", 0.05f);
-    shader_program.set_uniform_float4("light_color", 1.0f, 1.0f, 1.0f, 1.0f);
-    shader_program.set_uniform_float3("light_pos", 0.0f, 0.0f, 0.0f);
-    // Hardcoded Sun object radius
-    shader_program.set_uniform_float("light_radius", 5.0f);
+    shader_program.set_uniform_int("light.is_set", 0);
 
     // Table with planets data:
     // https://nssdc.gsfc.nasa.gov/planetary/factsheet/
@@ -53,25 +49,22 @@ void App::main_loop()
 
     // --------------------------------------------------------------------
 
-    // Solar system
-    SolarSystem ss;
+    // Celestial Body system
+    CelestialBodySystem ss;
 
     // Sun
     std::shared_ptr<CelestialBody> sun = ss.add_celestial_body(
         333000.0,                         // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 0.0f},      // pos
         glm::vec3{0.0, -0.000005f, 0.0f}, // vel
-        glm::vec3{1.0f, 1.0f, 0.5f},      // color
         shader_program                    // shader
     );
-    sun->is_light_emissor = true;
 
     // Mercury
     std::shared_ptr<CelestialBody> mercury = ss.add_celestial_body(
         0.055,                            // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 60.0f},     // pos
         glm::vec3{0.000609f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.28f, 0.27f, 0.27f},   // color
         shader_program                    // shader
     );
 
@@ -80,7 +73,6 @@ void App::main_loop()
         0.81,                             // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 75.0f},     // pos
         glm::vec3{0.000544f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.35f, 0.51f, 0.89f},   // color
         shader_program                    // shader
     );
 
@@ -89,7 +81,6 @@ void App::main_loop()
         1.0,                              // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 90.0f},     // pos
         glm::vec3{0.000497f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.0f, 0.0f, 1.0f},      // color
         shader_program                    // shader
     );
 
@@ -98,7 +89,6 @@ void App::main_loop()
         0.11,                            // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 105.0f},   // pos
         glm::vec3{0.00046f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.75f, 0.25f, 0.05f},  // color
         shader_program                   // shader
     );
 
@@ -107,7 +97,6 @@ void App::main_loop()
         317.82,                           // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 150.0f},    // pos
         glm::vec3{0.000385f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.78f, 0.56f, 0.22f},   // color
         shader_program                    // shader
     );
 
@@ -116,7 +105,6 @@ void App::main_loop()
         95.2,                             // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 180.0f},    // pos
         glm::vec3{0.000351f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.07f, 0.14f, 0.32f},   // color
         shader_program                    // shader
     );
 
@@ -125,7 +113,6 @@ void App::main_loop()
         14.5,                             // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 205.0f},    // pos
         glm::vec3{0.000329f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.11f, 0.06f, 0.06f},   // color
         shader_program                    // shader
     );
 
@@ -134,7 +121,6 @@ void App::main_loop()
         17.1,                             // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 230.0f},    // pos
         glm::vec3{0.000311f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.64f, 0.63f, 0.12f},   // color
         shader_program                    // shader
     );
 
@@ -143,15 +129,14 @@ void App::main_loop()
         0.0022,                           // mass (related to earth)
         glm::vec3{0.0f, 0.0f, 260.0f},    // pos
         glm::vec3{0.000292f, 0.0f, 0.0f}, // vel
-        glm::vec3{0.0f, 0.05f, 0.16f},    // color
         shader_program                    // shader
     );
 
     // Scene object
     std::shared_ptr<axolote::Scene> scene{new axolote::Scene{}};
-    scene->camera.pos = glm::vec3{0.0f, 0.0f, 0.0f};
+    scene->camera.pos = glm::vec3{0.0f, 10.0f, 0.0f};
     scene->camera.orientation = glm::normalize(glm::vec3{.1f, -1.0f, 0.0f});
-    scene->camera.speed = 3.0f;
+    scene->camera.speed = 80.0f;
     scene->camera.sensitivity = 10000.0f;
 
     // Add celestial bodies as drawable to scene
@@ -170,10 +155,6 @@ void App::main_loop()
     double before = glfwGetTime();
     while (!should_close())
     {
-        shader_program.set_uniform_float3(
-            "light_pos", sun->pos.x, sun->pos.y, sun->pos.z
-        );
-
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
