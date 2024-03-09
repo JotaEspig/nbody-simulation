@@ -42,16 +42,10 @@ thinking process:
 
 To calculate the orbital speed, we have to consider the point $O$ as a
 "massive object" where our stars will be orbiting.
-$$
-v = \sqrt{ \frac{GM_o}{r} }
-$$
+$$v = \sqrt{ \frac{GM_o}{r} }$$
 So, to know $M_o$ we can try to find the mass for the point $O$ where it
 generates the same amount of force than the opposite star:
-$$
-\frac{GM_cM}{r^2} = \frac{GMM}{(2r)^2}
-$$
+$$\frac{GM_cM}{r^2} = \frac{GMM}{(2r)^2}$$
 where $M$ is the stars masses. Simplifying:
-$$
-M_c = \frac{M}{4}
-$$
+$$M_c = \frac{M}{4}$$
 So, the orbital speed of the stars $A$ and $B$ should be: $v = \sqrt{ \frac{GM}{4r} }$
