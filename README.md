@@ -22,8 +22,9 @@ You need to install [Axolote Engine](https://github.com/JotaEspig/axolote-engine
 ## Running
 After compiling
 ```bash
-./bin/nbody-simulation config.json
+./bin/nbody-simulation config/<configuration_file>
 ```
+or
 
 ## Theory
 A binary star system is a system of 2 stars that are gravitationally bound to
