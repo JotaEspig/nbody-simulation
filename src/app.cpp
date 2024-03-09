@@ -155,6 +155,14 @@ void App::main_loop(const char *json_filename)
 
         glfwPollEvents();
 
+        auto x = ss.celestial_bodies();
+        glm::vec3 mid_point{
+            (x[0]->pos.x + x[1]->pos.x) / 2, (x[0]->pos.y + x[1]->pos.y) / 2,
+            (x[0]->pos.z + x[1]->pos.z) / 2
+        };
+        current_scene->camera.orientation
+            = glm::normalize(mid_point - current_scene->camera.pos);
+
         double now = glfwGetTime();
         double dt = now - before;
         before = now;

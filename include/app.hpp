@@ -2,7 +2,7 @@
 
 #include <axolote/engine.hpp>
 
-#define DT_MULTIPLIER 200000
+#define DT_MULTIPLIER 20000000
 
 class App : public axolote::Window
 {
