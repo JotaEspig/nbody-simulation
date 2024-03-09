@@ -14,6 +14,11 @@ public:
     std::shared_ptr<axolote::Model> default_body_model{new axolote::Model{
         "./resources/models/sphere/sphere.obj", glm::vec3{1.0f, 1.0f, 1.0f}
     }};
+    std::shared_ptr<axolote::Model> default_black_hole_body_model{
+        new axolote::Model{
+            "./resources/models/sphere/sphere.obj", glm::vec3{0.0f, 0.0f, 0.0f}
+        }
+    };
 
     CelestialBodySystem() = default;
     ~CelestialBodySystem() = default;
@@ -21,7 +26,7 @@ public:
     void
     setup_using_json(axolote::gl::Shader shader_program, const char *filename);
     std::shared_ptr<CelestialBody> add_celestial_body(
-        double mass, glm::vec3 pos, glm::vec3 vel,
+        double mass, glm::vec3 pos, glm::vec3 vel, bool is_black_hole,
         axolote::gl::Shader shader_program
     );
     void update(double dt);

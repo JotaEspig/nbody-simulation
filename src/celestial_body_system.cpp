@@ -6,6 +6,7 @@
 #include <axolote/object3d.hpp>
 #include <nlohmann/json.hpp>
 
+#include <celestial_body.hpp>
 #include <celestial_body_system.hpp>
 
 void CelestialBodySystem::setup_using_json(
@@ -31,12 +32,14 @@ void CelestialBodySystem::setup_using_json(
         vel.x = e["velocity"]["x"];
         vel.y = e["velocity"]["y"];
         vel.z = e["velocity"]["z"];
-        add_celestial_body(e["mass"], pos, vel, shader_program);
+
+        bool is_black_hole = e["black_hole"];
+        add_celestial_body(e["mass"], pos, vel, is_black_hole, shader_program);
     }
 }
 
 std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
-    double mass, glm::vec3 pos, glm::vec3 vel,
+    double mass, glm::vec3 pos, glm::vec3 vel, bool is_black_hole,
     axolote::gl::Shader shader_program
 )
 {
@@ -45,9 +48,14 @@ std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
     mat = glm::translate(mat, pos);
 
     // Create body
-    std::shared_ptr<CelestialBody> body{new CelestialBody{mass, vel, pos}};
+    std::shared_ptr<CelestialBody> body;
+    body = std::make_shared<CelestialBody>(mass, vel, pos, is_black_hole);
+
     axolote::Object3D obj{mat};
-    obj.model = default_body_model;
+    if (is_black_hole)
+        obj.model = default_black_hole_body_model;
+    else
+        obj.model = default_body_model;
     body->add_object(obj);
     body->bind_shader_at(0, shader_program);
 
