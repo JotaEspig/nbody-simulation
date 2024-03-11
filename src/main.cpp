@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         std::cout << "Invalid command" << std::endl
-                  << "Usage: ./bin/nbody-simulation config.json" << std::endl;
+                  << "Usage: ./bin/nbody-simulation <config json file>"
+                  << std::endl;
     }
     else
     {
