@@ -39,6 +39,7 @@ set(
     ${SOURCE_DIR}/celestial_body.cpp
     ${SOURCE_DIR}/celestial_body_system.cpp
     ${SOURCE_DIR}/main.cpp
+    ${SOURCE_DIR}/octree.cpp
 )
 
 # Adding executables
