@@ -1,4 +1,4 @@
-#include <GLFW/glfw3.h>
+#include <iostream>
 #include <memory>
 #include <sstream>
 
@@ -78,6 +78,13 @@ void App::main_loop(const char *json_filename)
         double dt = now - before;
         before = now;
         process_input(dt);
+
+        auto x = ss.celestial_bodies();
+        std::cout << "Velocity body 0: " << glm::length(x[0]->velocity)
+                  << std::endl;
+        std::cout << "Velocity body 1: " << glm::length(x[1]->velocity)
+                  << std::endl
+                  << std::endl;
 
         std::stringstream sstr;
         sstr << original_title << " | " << (int)(1 / dt) << " fps";
