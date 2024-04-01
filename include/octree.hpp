@@ -34,7 +34,7 @@ public:
         Node(const std::shared_ptr<CelestialBody> &body);
 
         void insert(const std::shared_ptr<CelestialBody> &body);
-        // Turns a leaf node into a normal node with 4 leafs (where one of them
+        // Turns a leaf node into a normal node with 8 leafs (where one of them
         // is the previous leaf node)
         void split();
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
