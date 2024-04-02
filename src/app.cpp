@@ -32,8 +32,8 @@ void App::main_loop(const char *json_filename)
     std::string original_title = title();
 
     axolote::gl::Shader shader_program(
-        "./resources/shaders/def_vertex_shader.glsl",
-        "./resources/shaders/def_fragment_shader.glsl"
+        "./resources/shaders/vertex_shader.glsl",
+        "./resources/shaders/fragment_shader.glsl"
     );
 
     shader_program.activate();
