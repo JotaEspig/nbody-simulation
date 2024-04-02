@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdlib>
 #include <memory>
+#include <ostream>
 
 #include <glm/fwd.hpp>
 
@@ -15,38 +17,42 @@ public:
     {
     public:
         glm::vec3 cube_start;
-        glm::vec3 cube_end;
+        float width;
         std::shared_ptr<CelestialBody> body;
         glm::vec3 center_of_mass;
-        double total_mass = false;
-        bool is_leaf = false;
+        double total_mass = 0.0;
+        bool is_leaf = true;
 
         std::unique_ptr<Node> luf; // left up front
         std::unique_ptr<Node> lub; // left up back
-        std::unique_ptr<Node> ruf; // right up front
-        std::unique_ptr<Node> rub; // right up back
         std::unique_ptr<Node> lbf; // left bottom front
         std::unique_ptr<Node> lbb; // left bottom back
+        std::unique_ptr<Node> ruf; // right up front
+        std::unique_ptr<Node> rub; // right up back
         std::unique_ptr<Node> rbf; // right bottom front
         std::unique_ptr<Node> rbb; // right bottom back
 
         Node();
-        Node(const std::shared_ptr<CelestialBody> &body);
+        Node(glm::vec3 cube_start, float width);
 
         void insert(const std::shared_ptr<CelestialBody> &body);
         // Turns a leaf node into a normal node with 8 leafs (where one of them
         // is the previous leaf node)
         void split();
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
+
+        friend std::ostream &operator<<(std::ostream &os, Node node);
+        friend std::ostream &
+        operator<<(std::ostream &os, std::unique_ptr<Node> &node);
     };
 
+    float initial_coord = -1000.0f;
+    float initial_width = std::abs(2 * initial_coord);
+
     std::unique_ptr<Node> root;
-    float max_x, max_y, max_z;
 
     OcTree();
+    OcTree(float initial_coord);
 
     void insert(const std::shared_ptr<CelestialBody> &body);
-    static std::unique_ptr<Node> leaf();
-    static std::unique_ptr<Node> leaf(const std::shared_ptr<CelestialBody> &body
-    );
 };

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <memory>
 #include <sstream>
 
@@ -7,9 +8,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
-#include <app.hpp>
-#include <celestial_body.hpp>
-#include <celestial_body_system.hpp>
+#include "app.hpp"
+#include "celestial_body_system.hpp"
+#include "octree.hpp"
 
 void App::process_input(float delta_t)
 {
@@ -64,6 +65,35 @@ void App::main_loop(const char *json_filename)
     {
         scene->add_drawable(e);
     }
+
+    // Testing OcTree
+    auto node = OcTree();
+    auto body = std::make_shared<CelestialBody>(
+        0, glm::vec3{}, glm::vec3{10.0f, 10.0f, 40.0f}
+    );
+    node.insert(body);
+
+    std::cout << "aaa" << std::endl;
+    std::cout << node.root.get() << std::endl;
+    std::cout << glm::to_string(node.root->body->pos) << std::endl;
+    std::cout << glm::to_string(node.root->cube_start) << " - "
+              << node.root->width << std::endl
+              << std::endl;
+
+    std::cout << "bbb" << std::endl;
+    std::cout << node.root.get() << std::endl;
+    node.root->split();
+    std::cout << node.root << std::endl;
+
+    std::cout << "ccc" << std::endl;
+    auto &correct = node.root->find_correct_child(body->pos);
+    correct->split();
+    std::cout << correct << std::endl;
+
+    std::cout << "ddd" << std::endl;
+    auto &correct2 = correct->find_correct_child(body->pos);
+    correct2->split();
+    std::cout << correct2 << std::endl;
 
     current_scene = scene;
     double before = glfwGetTime();
