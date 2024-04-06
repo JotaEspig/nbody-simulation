@@ -9,11 +9,20 @@ CelestialBody::CelestialBody(
 {
 }
 
-glm::vec3 CelestialBody::calculate_acceleration_vec(const CelestialBody &other)
+glm::vec3 CelestialBody::calculate_acceleration_vec(const CelestialBody &other
+) const
 {
     glm::vec3 direction = glm::normalize(pos - other.pos);
     double r = glm::distance(pos, other.pos);
     float gravitational_acceleration = (G * mass) / (r * r);
+    return direction * gravitational_acceleration;
+}
+
+glm::vec3 CelestialBody::calculate_acceleration_vec(const glm::vec3 &pos) const
+{
+    glm::vec3 direction = glm::normalize(CelestialBody::pos - pos);
+    double r = glm::distance(CelestialBody::pos, pos);
+    float gravitational_acceleration = (G * CelestialBody::mass) / (r * r);
     return direction * gravitational_acceleration;
 }
 
