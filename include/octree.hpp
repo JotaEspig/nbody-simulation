@@ -40,6 +40,7 @@ public:
         // is the previous leaf node)
         void split();
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
+        glm::vec3 center() const;
 
         friend std::ostream &operator<<(std::ostream &os, Node node);
         friend std::ostream &

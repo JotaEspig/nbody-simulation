@@ -26,15 +26,41 @@ OcTree::Node::Node(glm::vec3 cube_start, float width) :
 
 void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body)
 {
+    float m1 = total_mass;
+    float m2 = body->mass;
+    glm::vec3 x1 = center_of_mass;
+    glm::vec3 x2 = body->pos;
+
     if (is_leaf)
     {
+        if (Node::body == nullptr)
+        {
+            center_of_mass = x2;
+            total_mass = m2;
+            Node::body = body;
+            return;
+        }
+
+        // split must be the first!
         split();
+        center_of_mass = (m1 * x1 + m2 * x2) / (m1 + m2);
+        total_mass += m2;
+
+        auto &correct_node = find_correct_child(x2);
+        correct_node->insert(body);
+        return;
     }
+
+    center_of_mass = (m1 * x1 + m2 * x2) / (m1 + m2);
+    total_mass += m2;
+
+    auto &correct_node = find_correct_child(x2);
+    correct_node->insert(body);
 }
 
 void OcTree::Node::split()
 {
-    if (!is_leaf)
+    if (!is_leaf || body == nullptr)
         return;
 
     float new_width = width * 0.5f;
@@ -81,7 +107,8 @@ void OcTree::Node::split()
 
     auto &correct_node = find_correct_child(body->pos);
     std::swap(correct_node->body, body);
-    // see what to do with center_of_mass and total_mass
+    correct_node->center_of_mass = center_of_mass;
+    correct_node->total_mass = total_mass;
 
     is_leaf = false;
 }
@@ -130,8 +157,18 @@ OcTree::Node::find_correct_child(const glm::vec3 &pos)
     }
 }
 
+glm::vec3 OcTree::Node::center() const
+{
+    return cube_start + width * 0.5f;
+}
+
 std::ostream &operator<<(std::ostream &os, OcTree::Node node)
 {
+    std::cout << "[ " << glm::to_string(node.cube_start) << ", " << node.width
+              << ", " << node.body.get() << ", "
+              << glm::to_string(node.center_of_mass) << ", " << node.total_mass
+              << ", " << node.is_leaf << " ]" << std::endl;
+
     auto x = node.luf.get();
     std::cout << "luf -> " << x << " - ";
     if (x)
@@ -171,6 +208,11 @@ std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
 {
     if (node == nullptr)
         return os;
+
+    std::cout << "[ " << glm::to_string(node->cube_start) << ", " << node->width
+              << ", " << node->body.get() << ", "
+              << glm::to_string(node->center_of_mass) << ", "
+              << node->total_mass << ", " << node->is_leaf << " ]" << std::endl;
 
     auto x = node->luf.get();
     std::cout << "luf -> " << x << " - ";
@@ -232,6 +274,8 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body)
             glm::vec3{initial_coord, initial_coord, initial_coord},
             initial_width
         );
+        root->center_of_mass = body->pos;
+        root->total_mass = body->mass;
         root->body = body;
     }
     else

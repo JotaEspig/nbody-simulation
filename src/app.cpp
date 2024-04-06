@@ -67,33 +67,47 @@ void App::main_loop(const char *json_filename)
     }
 
     // Testing OcTree
-    auto node = OcTree();
+    auto octree = OcTree();
     auto body = std::make_shared<CelestialBody>(
-        0, glm::vec3{}, glm::vec3{10.0f, 10.0f, 40.0f}
+        1, glm::vec3{}, glm::vec3{10.0f, 10.0f, 40.0f}
     );
-    node.insert(body);
+    auto body2 = std::make_shared<CelestialBody>(
+        1, glm::vec3{}, glm::vec3{-10.0f, 10.0f, 40.0f}
+    );
+    auto body3 = std::make_shared<CelestialBody>(
+        1, glm::vec3{}, glm::vec3{10.0f, -100.0f, -40.0f}
+    );
+    auto body4 = std::make_shared<CelestialBody>(
+        1, glm::vec3{}, glm::vec3{10.0f, 600.0f, 40.0f}
+    );
+    auto body5 = std::make_shared<CelestialBody>(
+        1, glm::vec3{}, glm::vec3{10.0f, 600.0f, 700.0f}
+    );
+
+    std::cout << 1 << std::endl;
+    octree.insert(body);
+    std::cout << 2 << std::endl;
+    octree.insert(body2);
+    std::cout << 3 << std::endl;
+    octree.insert(body3);
+    std::cout << 4 << std::endl;
+    octree.insert(body4);
+    std::cout << 5 << std::endl;
+    octree.insert(body5);
 
     std::cout << "aaa" << std::endl;
-    std::cout << node.root.get() << std::endl;
-    std::cout << glm::to_string(node.root->body->pos) << std::endl;
-    std::cout << glm::to_string(node.root->cube_start) << " - "
-              << node.root->width << std::endl
-              << std::endl;
+    std::cout << glm::to_string(octree.root->center()) << std::endl;
+    std::cout << octree.root << std::endl;
 
     std::cout << "bbb" << std::endl;
-    std::cout << node.root.get() << std::endl;
-    node.root->split();
-    std::cout << node.root << std::endl;
+    std::cout << glm::to_string(octree.root->luf->center()) << std::endl;
+    std::cout << octree.root->luf << std::endl;
+    std::cout << glm::to_string(octree.root->ruf->center()) << std::endl;
+    std::cout << octree.root->ruf << std::endl;
+    std::cout << glm::to_string(octree.root->rbb->center()) << std::endl;
+    std::cout << octree.root->rbb << std::endl;
 
     std::cout << "ccc" << std::endl;
-    auto &correct = node.root->find_correct_child(body->pos);
-    correct->split();
-    std::cout << correct << std::endl;
-
-    std::cout << "ddd" << std::endl;
-    auto &correct2 = correct->find_correct_child(body->pos);
-    correct2->split();
-    std::cout << correct2 << std::endl;
 
     current_scene = scene;
     double before = glfwGetTime();
