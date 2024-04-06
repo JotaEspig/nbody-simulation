@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
@@ -162,6 +163,13 @@ glm::vec3 OcTree::Node::center() const
     return cube_start + width * 0.5f;
 }
 
+bool OcTree::Node::should_use_this_node() const
+{
+    return is_leaf
+           || glm::distance(center_of_mass, center())
+                  < width / OcTree::simulation_precision;
+}
+
 std::ostream &operator<<(std::ostream &os, OcTree::Node node)
 {
     std::cout << "[ " << glm::to_string(node.cube_start) << ", " << node.width
@@ -250,6 +258,8 @@ std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
 }
 
 // ---- OCTREE ----
+
+uint OcTree::simulation_precision = 1000;
 
 OcTree::OcTree()
 {

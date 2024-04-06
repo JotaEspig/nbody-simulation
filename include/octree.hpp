@@ -41,12 +41,14 @@ public:
         void split();
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
         glm::vec3 center() const;
+        bool should_use_this_node() const;
 
         friend std::ostream &operator<<(std::ostream &os, Node node);
         friend std::ostream &
         operator<<(std::ostream &os, std::unique_ptr<Node> &node);
     };
 
+    static uint simulation_precision;
     float initial_coord = -1000.0f;
     float initial_width = std::abs(2 * initial_coord);
 
