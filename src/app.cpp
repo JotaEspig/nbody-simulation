@@ -140,6 +140,7 @@ void App::main_loop(const char *json_filename)
         {
             dt *= DT_MULTIPLIER;
 
+            ss.build_octree();
             // Update celestial bodies
             for (int i = 0; i < 10; i++)
                 ss.update(dt / 10.0);

@@ -6,7 +6,8 @@
 #include <axolote/object3d.hpp>
 #include <nlohmann/json.hpp>
 
-#include <celestial_body_system.hpp>
+#include "celestial_body_system.hpp"
+#include "octree.hpp"
 
 void CelestialBodySystem::setup_using_json(
     axolote::gl::Shader shader_program, const char *filename
@@ -55,6 +56,15 @@ std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
     _celestial_bodies.push_back(body);
 
     return body;
+}
+
+void CelestialBodySystem::build_octree()
+{
+    octree = OcTree{};
+    for (auto &c : celestial_bodies())
+    {
+        octree.insert(c);
+    }
 }
 
 void CelestialBodySystem::update(double dt)

@@ -118,10 +118,6 @@ std::unique_ptr<OcTree::Node> &
 OcTree::Node::find_correct_child(const glm::vec3 &pos)
 {
     glm::vec3 mid = cube_start + width * 0.5f;
-    std::cout << "FIND" << std::endl;
-    std::cout << glm::to_string(cube_start) << " - " << width << std::endl;
-    std::cout << glm::to_string(mid) << std::endl;
-    std::cout << glm::to_string(pos) << std::endl;
     if (pos.x > mid.x)
     {
         if (pos.y > mid.y)
