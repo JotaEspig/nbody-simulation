@@ -273,7 +273,7 @@ OcTree::OcTree(float initial_coord)
         initial_coord = -initial_coord;
 
     OcTree::initial_coord = initial_coord;
-    initial_width = std::abs(2 * OcTree::initial_width);
+    initial_width = std::abs(2 * OcTree::initial_coord);
 }
 
 void OcTree::insert(const std::shared_ptr<CelestialBody> &body)
