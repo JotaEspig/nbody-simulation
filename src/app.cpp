@@ -57,7 +57,7 @@ void App::main_loop(const char *json_filename)
     std::shared_ptr<axolote::Scene> scene{new axolote::Scene{}};
     // Configs camera (points it downwards)
     scene->camera.pos = glm::vec3{0.0f, 100.0f, 0.0f};
-    scene->camera.orientation = glm::normalize(glm::vec3{.1f, -1.0f, 0.0f});
+    scene->camera.orientation = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
     scene->camera.speed = 80.0f;
     scene->camera.sensitivity = 10000.0f;
 
@@ -76,13 +76,14 @@ void App::main_loop(const char *json_filename)
 
         glfwPollEvents();
 
-        auto x = ss.celestial_bodies();
-        glm::vec3 mid_point{
-            (x[0]->pos.x + x[1]->pos.x) / 2, (x[0]->pos.y + x[1]->pos.y) / 2,
-            (x[0]->pos.z + x[1]->pos.z) / 2
-        };
-        current_scene->camera.orientation
-            = glm::normalize(mid_point - current_scene->camera.pos);
+        // auto x = ss.celestial_bodies();
+        // glm::vec3 mid_point{
+        //     (x[0]->pos.x + x[1]->pos.x + x[2]->pos.x) / 3,
+        //     (x[0]->pos.y + x[1]->pos.y + x[2]->pos.y) / 3,
+        //     (x[0]->pos.z + x[1]->pos.z + x[2]->pos.z) / 3
+        // };
+        // current_scene->camera.orientation
+        //     = glm::normalize(mid_point - current_scene->camera.pos);
 
         double now = glfwGetTime();
         double dt = now - before;
