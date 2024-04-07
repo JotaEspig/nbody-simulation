@@ -165,7 +165,7 @@ glm::vec3 OcTree::Node::net_acceleration_on_body(
 
         return body->calculate_acceleration_vec(*Node::body);
     }
-    else if (ratio_width_distance(body->pos) < simulation_precision)
+    else if (ratio_width_distance(body->pos) < theta)
     {
         return body->calculate_acceleration_vec(center_of_mass, total_mass);
     }
@@ -276,7 +276,7 @@ std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
 
 // ---- OCTREE ----
 
-double OcTree::simulation_precision = 1.0;
+double OcTree::theta = 1.0;
 
 OcTree::OcTree()
 {

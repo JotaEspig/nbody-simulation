@@ -51,7 +51,9 @@ public:
         operator<<(std::ostream &os, std::unique_ptr<Node> &node);
     };
 
-    static double simulation_precision;
+    /** Simulation precision parameter, a high value means a low simulation
+     * accuracy but it becomes quickier, and a low value means the opposite **/
+    static double theta;
     float initial_coord = -1000.0f;
     float initial_width = std::abs(2 * initial_coord);
 
