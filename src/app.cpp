@@ -67,49 +67,6 @@ void App::main_loop(const char *json_filename)
         scene->add_drawable(e);
     }
 
-    // Testing OcTree
-    auto octree = OcTree(-1000.0f);
-    auto body = std::make_shared<CelestialBody>(
-        1, glm::vec3{}, glm::vec3{10.0f, 10.0f, 40.0f}
-    );
-    auto body2 = std::make_shared<CelestialBody>(
-        1, glm::vec3{}, glm::vec3{-10.0f, 10.0f, 40.0f}
-    );
-    auto body3 = std::make_shared<CelestialBody>(
-        1, glm::vec3{}, glm::vec3{10.0f, -100.0f, -40.0f}
-    );
-    auto body4 = std::make_shared<CelestialBody>(
-        1, glm::vec3{}, glm::vec3{10.0f, 600.0f, 40.0f}
-    );
-    auto body5 = std::make_shared<CelestialBody>(
-        1, glm::vec3{}, glm::vec3{10.0f, 600.0f, 700.0f}
-    );
-
-    std::cout << 1 << std::endl;
-    octree.insert(body);
-    std::cout << 2 << std::endl;
-    octree.insert(body2);
-    std::cout << 3 << std::endl;
-    octree.insert(body3);
-    std::cout << 4 << std::endl;
-    octree.insert(body4);
-    std::cout << 5 << std::endl;
-    octree.insert(body5);
-
-    std::cout << "aaa" << std::endl;
-    std::cout << glm::to_string(octree.root->center()) << std::endl;
-    std::cout << octree.root << std::endl;
-
-    std::cout << "bbb" << std::endl;
-    std::cout << glm::to_string(octree.root->luf->center()) << std::endl;
-    std::cout << octree.root->luf << std::endl;
-    std::cout << glm::to_string(octree.root->ruf->center()) << std::endl;
-    std::cout << octree.root->ruf << std::endl;
-    std::cout << glm::to_string(octree.root->rbb->center()) << std::endl;
-    std::cout << octree.root->rbb << std::endl;
-
-    std::cout << "ccc" << std::endl;
-
     current_scene = scene;
     double before = glfwGetTime();
     while (!should_close())
