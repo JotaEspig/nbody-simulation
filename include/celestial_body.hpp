@@ -17,7 +17,8 @@ public:
     CelestialBody(double mass, const glm::vec3 &velocity, const glm::vec3 &pos);
 
     glm::vec3 calculate_acceleration_vec(const CelestialBody &other) const;
-    glm::vec3 calculate_acceleration_vec(const glm::vec3 &pos) const;
+    glm::vec3
+    calculate_acceleration_vec(const glm::vec3 &pos, double mass) const;
     void update(double dt) override;
     void draw() override;
 };
