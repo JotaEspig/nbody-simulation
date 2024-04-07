@@ -40,15 +40,18 @@ public:
         // is the previous leaf node)
         void split();
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
-        glm::vec3 center() const;
-        bool should_use_this_node() const;
+        glm::vec3 net_acceleration_on_body(
+            std::shared_ptr<CelestialBody> body, double dt
+        );
+        /** Calculates the ratio width / distance to center of mass **/
+        bool ratio_width_distance(const glm::vec3 &pos) const;
 
         friend std::ostream &operator<<(std::ostream &os, Node node);
         friend std::ostream &
         operator<<(std::ostream &os, std::unique_ptr<Node> &node);
     };
 
-    static uint simulation_precision;
+    static double simulation_precision;
     float initial_coord = -1000.0f;
     float initial_width = std::abs(2 * initial_coord);
 
@@ -58,4 +61,6 @@ public:
     OcTree(float initial_coord);
 
     void insert(const std::shared_ptr<CelestialBody> &body);
+    glm::vec3
+    net_acceleration_on_body(std::shared_ptr<CelestialBody> body, double dt);
 };

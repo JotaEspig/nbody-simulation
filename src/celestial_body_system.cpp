@@ -67,7 +67,7 @@ void CelestialBodySystem::build_octree()
     }
 }
 
-void CelestialBodySystem::update(double dt)
+void CelestialBodySystem::normal_algorithm(double dt)
 {
     for (auto body0 : _celestial_bodies)
     {
@@ -80,6 +80,21 @@ void CelestialBodySystem::update(double dt)
             body0->velocity += acc * (float)dt;
         }
     }
+}
+
+void CelestialBodySystem::barnes_hut_algorithm(double dt)
+{
+    for (auto &c : celestial_bodies())
+    {
+        glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
+        c->velocity += acc * (float)dt;
+    }
+}
+
+void CelestialBodySystem::update(double dt)
+{
+    // normal_algorithm(dt);
+    barnes_hut_algorithm(dt);
 }
 
 std::vector<std::shared_ptr<CelestialBody>>

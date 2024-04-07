@@ -154,16 +154,37 @@ OcTree::Node::find_correct_child(const glm::vec3 &pos)
     }
 }
 
-glm::vec3 OcTree::Node::center() const
+glm::vec3 OcTree::Node::net_acceleration_on_body(
+    std::shared_ptr<CelestialBody> body, double dt
+)
 {
-    return cube_start + width * 0.5f;
+    if (is_leaf)
+    {
+        if (Node::body == nullptr || Node::body == body)
+            return glm::vec3{0.0f, 0.0f, 0.0f};
+
+        return body->calculate_acceleration_vec(*Node::body);
+    }
+    else if (ratio_width_distance(body->pos) < simulation_precision)
+    {
+        return body->calculate_acceleration_vec(center_of_mass, total_mass);
+    }
+
+    glm::vec3 net_acceleration{};
+    net_acceleration += luf->net_acceleration_on_body(body, dt);
+    net_acceleration += lub->net_acceleration_on_body(body, dt);
+    net_acceleration += lbf->net_acceleration_on_body(body, dt);
+    net_acceleration += lbb->net_acceleration_on_body(body, dt);
+    net_acceleration += ruf->net_acceleration_on_body(body, dt);
+    net_acceleration += rub->net_acceleration_on_body(body, dt);
+    net_acceleration += rbf->net_acceleration_on_body(body, dt);
+    net_acceleration += rbb->net_acceleration_on_body(body, dt);
+    return net_acceleration;
 }
 
-bool OcTree::Node::should_use_this_node() const
+bool OcTree::Node::ratio_width_distance(const glm::vec3 &pos) const
 {
-    return is_leaf
-           || glm::distance(center_of_mass, center())
-                  < width / OcTree::simulation_precision;
+    return width / glm::distance(pos, center_of_mass);
 }
 
 std::ostream &operator<<(std::ostream &os, OcTree::Node node)
@@ -255,7 +276,7 @@ std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
 
 // ---- OCTREE ----
 
-uint OcTree::simulation_precision = 1000;
+double OcTree::simulation_precision = 1.0;
 
 OcTree::OcTree()
 {
@@ -288,4 +309,13 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body)
     {
         root->insert(body);
     }
+}
+
+glm::vec3
+OcTree::net_acceleration_on_body(std::shared_ptr<CelestialBody> body, double dt)
+{
+    if (root == nullptr)
+        return glm::vec3{};
+
+    return root->net_acceleration_on_body(body, dt);
 }

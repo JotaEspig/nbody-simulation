@@ -27,6 +27,8 @@ public:
         axolote::gl::Shader shader_program
     );
     void build_octree();
+    void normal_algorithm(double dt);
+    void barnes_hut_algorithm(double dt);
     void update(double dt);
     std::vector<std::shared_ptr<CelestialBody>> celestial_bodies() const;
 
