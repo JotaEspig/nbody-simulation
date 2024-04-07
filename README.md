@@ -21,5 +21,7 @@ You need to install [Axolote Engine](https://github.com/JotaEspig/axolote-engine
 ## Running
 After compiling
 ```bash
-./bin/nbody-simulation
+./bin/nbody-simulation <config json file>
 ```
+
+There are some config files already made inside config folder
