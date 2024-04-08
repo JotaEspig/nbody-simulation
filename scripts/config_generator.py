@@ -1,16 +1,25 @@
 import json
 from typing import List
+from random import random
 
 BINARY = 0
 GALAXY = 1
+G = 6.67 * 10 ** -11
 
 
 def save_config(config_dict: List[dict]) -> None:
     print("type the filename:")
     filename = input("> ")
-
     with open(f"./config/auto_gen_{filename}.json", "w") as file:
         file.write(json.dumps(config_dict, indent=4))
+
+
+def orbital_speed(mass: float, distance: float) -> float:
+    return (G * mass * (1/distance)) ** 0.5
+
+
+def normalize(coord: float, distance: float) -> float:
+    return coord / distance
 
 
 def gen_binary() -> List[dict]:
@@ -62,12 +71,87 @@ def gen_galaxy() -> List[dict]:
             print(f"Which axis should the galaxy number {i} be pointed to? [x/y/z]")
             galaxy_axis = str(input("> ").strip().lower())
 
-        print(f"Does galaxy number {i} have a central massive body? [Y/n]")
-        central_massive_body_answer = str(input("> ").strip().lower())
-        if central_massive_body_answer != "n":
-            ...
-        else:
-            ...
+        print(f"Galaxy number {i} central massive body mass:")
+        central_massive_body_mass = float(input("> "))
+        print(f"Galaxy number {i} velocity.x:")
+        velocity_x = int(input("> "))
+        print(f"Galaxy number {i} velocity.y:")
+        velocity_y = int(input("> "))
+        print(f"Galaxy number {i} velocity.z:")
+        velocity_z = int(input("> "))
+
+        obj = dict()
+        obj["mass"] = central_massive_body_mass
+        obj["pos"] = {"x": pos_x, "y": pos_y, "z": pos_z}
+        obj["velocity"] = {"x": velocity_x, "y": velocity_y, "z": velocity_z}
+        config_dict.append(obj)
+
+        print(f"galaxy number {i} max orbital objects radius")
+        radius = int(input("> "))
+        print(f"How many bodies will orbit galaxy number {i}?")
+        amount = int(input("> "))
+        same_mass = False
+        common_mass = 0
+        if amount > 0:
+            print(f"These bodies will have the same mass?")
+            same_mass = bool(input("> "))
+
+        obj_count = 1
+        counter = 0
+        step = radius / amount
+        while counter < radius:
+            offset = step * obj_count
+            pos_x_offset = pos_x + offset * (1 if random() < 0.5 else -1)
+            pos_y_offset = pos_y + offset * (1 if random() < 0.5 else -1)
+            pos_z_offset = pos_z + offset * (1 if random() < 0.5 else -1)
+            if galaxy_axis == "x":
+                pos_x_offset = pos_x
+            elif galaxy_axis == "y":
+                pos_y_offset = pos_y
+            else:
+                pos_z_offset = pos_z
+
+            orbit_obj_mass = 0
+            if same_mass and common_mass != 0:
+                orbit_obj_mass = common_mass
+            elif same_mass and common_mass == 0:
+                print("Object mass")
+                common_mass = float(input("> "))
+            elif not same_mass:
+                print(f"Object {obj_count} mass")
+                orbit_obj_mass = float(input("> "))
+
+            obj = dict()
+            obj["mass"] = orbit_obj_mass
+            obj["pos"] = {"x": pos_x_offset, "y": pos_y_offset, "z": pos_z_offset}
+
+            vec_x = pos_x - pos_x_offset
+            vec_y = pos_y - pos_y_offset
+            vec_z = pos_z - pos_z_offset
+            distance = (vec_x ** 2 + vec_y ** 2 + vec_z ** 2) ** 0.5
+            obj_orbital_speed = orbital_speed(central_massive_body_mass, distance)
+            print(obj_orbital_speed)
+            if vec_x == 0:
+                aux = vec_y
+                vec_y = vec_z
+                vec_z = -aux
+            if vec_y == 0:
+                aux = vec_x
+                vec_x = vec_z
+                vec_z = -aux
+            else:
+                aux = vec_x
+                vec_x = vec_y
+                vec_y = -aux
+
+            vec_x = normalize(vec_x, distance)
+            vec_y = normalize(vec_y, distance)
+            vec_z = normalize(vec_z, distance)
+            obj["velocity"] = {"x": vec_x * obj_orbital_speed, "y": vec_y * obj_orbital_speed, "z": vec_z * obj_orbital_speed}
+
+            config_dict.append(obj)
+            counter += step
+            obj_count += 1
 
     return config_dict
 
