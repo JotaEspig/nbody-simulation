@@ -45,7 +45,31 @@ def gen_binary() -> List[dict]:
 
 
 def gen_galaxy() -> List[dict]:
-    ...
+    config_dict: List[dict] = list()
+    print("How many galaxies?")
+    galaxies_amount = int(input("> "))
+    for i in range(galaxies_amount):
+        print(f"Galaxy number {i} pos.x:")
+        pos_x = int(input("> "))
+        print(f"Galaxy number {i} pos.y:")
+        pos_y = int(input("> "))
+        print(f"Galaxy number {i} pos.z:")
+        pos_z = int(input("> "))
+
+        possible_answers = ["x", "y", "z"]
+        galaxy_axis = ""
+        while galaxy_axis not in possible_answers:
+            print(f"Which axis should the galaxy number {i} be pointed to? [x/y/z]")
+            galaxy_axis = str(input("> ").strip().lower())
+
+        print(f"Does galaxy number {i} have a central massive body? [Y/n]")
+        central_massive_body_answer = str(input("> ").strip().lower())
+        if central_massive_body_answer != "n":
+            ...
+        else:
+            ...
+
+    return config_dict
 
 
 def gen_file(type: int) -> None:
