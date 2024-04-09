@@ -84,8 +84,19 @@ void CelestialBodySystem::normal_algorithm(double dt)
 
 void CelestialBodySystem::barnes_hut_algorithm(double dt)
 {
-    for (auto &c : celestial_bodies())
+    auto bodies = celestial_bodies();
+    int i = -1;
+    for (auto &c : bodies)
     {
+        ++i;
+        if (std::abs(c->pos.x) > octree.initial_width / 2
+            || std::abs(c->pos.y) > octree.initial_width / 2
+            || std::abs(c->pos.z) > octree.initial_width / 2)
+        {
+            _celestial_bodies.erase(_celestial_bodies.begin() + i);
+            continue;
+        }
+
         glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
         c->velocity += acc * (float)dt;
     }
