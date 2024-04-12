@@ -1,3 +1,7 @@
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <celestial_body.hpp>
 
 CelestialBody::CelestialBody(
@@ -26,6 +30,11 @@ glm::vec3 CelestialBody::calculate_acceleration_vec(
     double r = glm::distance(CelestialBody::pos, pos);
     float gravitational_acceleration = (G * mass) / (r * r);
     return direction * gravitational_acceleration;
+}
+
+bool CelestialBody::is_colinding(const CelestialBody &other)
+{
+    return (radius + other.radius) > glm::distance(pos, other.pos);
 }
 
 void CelestialBody::update(double dt)

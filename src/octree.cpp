@@ -163,6 +163,8 @@ glm::vec3 OcTree::Node::net_acceleration_on_body(
         if (Node::body == nullptr || Node::body == body)
             return glm::vec3{0.0f, 0.0f, 0.0f};
 
+        if (Node::body->is_colinding(*body))
+            std::cout << 1 << std::endl;
         return body->calculate_acceleration_vec(*Node::body);
     }
     else if (ratio_width_distance(body->pos) < theta)
