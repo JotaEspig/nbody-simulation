@@ -2,7 +2,8 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <celestial_body.hpp>
+#include "celestial_body.hpp"
+#include "constants.hpp"
 
 CelestialBody::CelestialBody(
     double mass, const glm::vec3 &velocity, const glm::vec3 &pos

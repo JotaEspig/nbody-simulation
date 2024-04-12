@@ -5,8 +5,6 @@
 
 #include <axolote/engine.hpp>
 
-#include <constants.hpp>
-
 class CelestialBody : public axolote::Entity
 {
 public:

@@ -10,7 +10,6 @@
 
 #include "app.hpp"
 #include "celestial_body_system.hpp"
-#include "octree.hpp"
 
 void App::process_input(float delta_t)
 {
