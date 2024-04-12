@@ -17,6 +17,10 @@ cmake .
 make -j4
 ```
 You need to install [Axolote Engine](https://github.com/JotaEspig/axolote-engine) to run it.
+```bash
+chmod +x install_axolote.sh
+./install_axolote.sh
+```
 
 ## Running
 After compiling
