@@ -74,11 +74,11 @@ def gen_galaxy() -> List[dict]:
         print(f"Galaxy number {i} central massive body mass:")
         central_massive_body_mass = float(input("> "))
         print(f"Galaxy number {i} velocity.x:")
-        velocity_x = int(input("> "))
+        velocity_x = float(input("> "))
         print(f"Galaxy number {i} velocity.y:")
-        velocity_y = int(input("> "))
+        velocity_y = float(input("> "))
         print(f"Galaxy number {i} velocity.z:")
-        velocity_z = int(input("> "))
+        velocity_z = float(input("> "))
 
         obj = dict()
         obj["mass"] = central_massive_body_mass
