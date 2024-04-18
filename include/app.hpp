@@ -4,8 +4,7 @@
 
 #define DT_MULTIPLIER 20000000
 
-class App : public axolote::Window
-{
+class App : public axolote::Window {
 public:
     bool pause = false;
     bool is_pause_key_press = false;

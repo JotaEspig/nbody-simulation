@@ -11,24 +11,20 @@
 #include "app.hpp"
 #include "celestial_body_system.hpp"
 
-void App::process_input(float delta_t)
-{
+void App::process_input(float delta_t) {
     Window::process_input(delta_t);
 
     int pause_key_state = glfwGetKey(window, GLFW_KEY_P);
-    if (pause_key_state == GLFW_PRESS && !is_pause_key_press)
-    {
+    if (pause_key_state == GLFW_PRESS && !is_pause_key_press) {
         is_pause_key_press = true;
     }
-    else if (pause_key_state == GLFW_RELEASE && is_pause_key_press)
-    {
+    else if (pause_key_state == GLFW_RELEASE && is_pause_key_press) {
         pause = !pause;
         is_pause_key_press = false;
     }
 }
 
-void App::main_loop(const char *json_filename)
-{
+void App::main_loop(const char *json_filename) {
     std::string original_title = title();
 
     axolote::gl::Shader shader_program(
@@ -61,15 +57,13 @@ void App::main_loop(const char *json_filename)
     scene->camera.sensitivity = 10000.0f;
 
     // Add celestial bodies as drawable to scene
-    for (auto &e : ss.celestial_bodies())
-    {
+    for (auto &e : ss.celestial_bodies()) {
         scene->add_drawable(e);
     }
 
     current_scene = scene;
     double before = glfwGetTime();
-    while (!should_close())
-    {
+    while (!should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -93,8 +87,7 @@ void App::main_loop(const char *json_filename)
         sstr << original_title << " | " << (int)(1 / dt) << " fps";
         set_title(sstr.str());
 
-        if (!pause)
-        {
+        if (!pause) {
             dt *= DT_MULTIPLIER;
 
             ss.build_octree();

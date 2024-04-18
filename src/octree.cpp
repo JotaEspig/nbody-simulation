@@ -14,28 +14,24 @@
 
 // ---- OCTREE NODE ----
 
-OcTree::Node::Node()
-{
+OcTree::Node::Node() {
 }
 
 OcTree::Node::Node(glm::vec3 cube_start, float width) :
-    cube_start{cube_start},
-    width{width}
+  cube_start{cube_start},
+  width{width}
 
 {
 }
 
-void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body)
-{
+void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
     float m1 = total_mass;
     float m2 = body->mass;
     glm::vec3 x1 = center_of_mass;
     glm::vec3 x2 = body->pos;
 
-    if (is_leaf)
-    {
-        if (Node::body == nullptr)
-        {
+    if (is_leaf) {
+        if (Node::body == nullptr) {
             center_of_mass = x2;
             total_mass = m2;
             Node::body = body;
@@ -59,8 +55,7 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body)
     correct_node->insert(body);
 }
 
-void OcTree::Node::split()
-{
+void OcTree::Node::split() {
     if (!is_leaf || body == nullptr)
         return;
 
@@ -115,37 +110,30 @@ void OcTree::Node::split()
 }
 
 std::unique_ptr<OcTree::Node> &
-OcTree::Node::find_correct_child(const glm::vec3 &pos)
-{
+OcTree::Node::find_correct_child(const glm::vec3 &pos) {
     glm::vec3 mid = cube_start + width * 0.5f;
-    if (pos.x > mid.x)
-    {
-        if (pos.y > mid.y)
-        {
+    if (pos.x > mid.x) {
+        if (pos.y > mid.y) {
             if (pos.z > mid.z)
                 return ruf;
             else
                 return rub;
         }
-        else
-        {
+        else {
             if (pos.z > mid.z)
                 return rbf;
             else
                 return rbb;
         }
     }
-    else
-    {
-        if (pos.y > mid.y)
-        {
+    else {
+        if (pos.y > mid.y) {
             if (pos.z > mid.z)
                 return luf;
             else
                 return lub;
         }
-        else
-        {
+        else {
             if (pos.z > mid.z)
                 return lbf;
             else
@@ -156,19 +144,15 @@ OcTree::Node::find_correct_child(const glm::vec3 &pos)
 
 glm::vec3 OcTree::Node::net_acceleration_on_body(
     std::shared_ptr<CelestialBody> body, double dt
-)
-{
-    if (is_leaf)
-    {
+) {
+
+    if (is_leaf) {
         if (Node::body == nullptr || Node::body == body)
             return glm::vec3{0.0f, 0.0f, 0.0f};
 
-        if (Node::body->is_colinding(*body))
-            std::cout << 1 << std::endl;
         return body->calculate_acceleration_vec(*Node::body);
     }
-    else if (ratio_width_distance(body->pos) < theta)
-    {
+    else if (ratio_width_distance(body->pos) < theta) {
         return body->calculate_acceleration_vec(center_of_mass, total_mass);
     }
 
@@ -184,13 +168,11 @@ glm::vec3 OcTree::Node::net_acceleration_on_body(
     return net_acceleration;
 }
 
-bool OcTree::Node::ratio_width_distance(const glm::vec3 &pos) const
-{
+bool OcTree::Node::ratio_width_distance(const glm::vec3 &pos) const {
     return width / glm::distance(pos, center_of_mass);
 }
 
-std::ostream &operator<<(std::ostream &os, OcTree::Node node)
-{
+std::ostream &operator<<(std::ostream &os, OcTree::Node node) {
     std::cout << "[ " << glm::to_string(node.cube_start) << ", " << node.width
               << ", " << node.body.get() << ", "
               << glm::to_string(node.center_of_mass) << ", " << node.total_mass
@@ -231,8 +213,8 @@ std::ostream &operator<<(std::ostream &os, OcTree::Node node)
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
-{
+std::ostream &
+operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node) {
     if (node == nullptr)
         return os;
 
@@ -280,12 +262,10 @@ std::ostream &operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node)
 
 double OcTree::theta = 1.0;
 
-OcTree::OcTree()
-{
+OcTree::OcTree() {
 }
 
-OcTree::OcTree(float initial_coord)
-{
+OcTree::OcTree(float initial_coord) {
     if (initial_coord == 0)
         return;
     else if (initial_coord > 0)
@@ -295,10 +275,8 @@ OcTree::OcTree(float initial_coord)
     initial_width = std::abs(2 * OcTree::initial_coord);
 }
 
-void OcTree::insert(const std::shared_ptr<CelestialBody> &body)
-{
-    if (root == nullptr)
-    {
+void OcTree::insert(const std::shared_ptr<CelestialBody> &body) {
+    if (root == nullptr) {
         root = std::make_unique<Node>(
             glm::vec3{initial_coord, initial_coord, initial_coord},
             initial_width
@@ -307,15 +285,14 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body)
         root->total_mass = body->mass;
         root->body = body;
     }
-    else
-    {
+    else {
         root->insert(body);
     }
 }
 
-glm::vec3
-OcTree::net_acceleration_on_body(std::shared_ptr<CelestialBody> body, double dt)
-{
+glm::vec3 OcTree::net_acceleration_on_body(
+    std::shared_ptr<CelestialBody> body, double dt
+) {
     if (root == nullptr)
         return glm::vec3{};
 

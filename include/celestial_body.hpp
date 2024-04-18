@@ -5,8 +5,7 @@
 
 #include <axolote/engine.hpp>
 
-class CelestialBody : public axolote::Entity
-{
+class CelestialBody : public axolote::Entity {
 public:
     double mass;
     glm::vec3 velocity;

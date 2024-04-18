@@ -9,8 +9,7 @@
 #include "celestial_body.hpp"
 #include "octree.hpp"
 
-class CelestialBodySystem
-{
+class CelestialBodySystem {
 public:
     OcTree octree;
     std::shared_ptr<axolote::Model> default_body_model{new axolote::Model{

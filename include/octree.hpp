@@ -10,11 +10,9 @@
 
 // Based on Barnes-Hut algorithm
 
-class OcTree
-{
+class OcTree {
 public:
-    class Node
-    {
+    class Node {
     public:
         glm::vec3 cube_start;
         float width;
@@ -42,6 +40,10 @@ public:
         std::unique_ptr<Node> &find_correct_child(const glm::vec3 &pos);
         glm::vec3 net_acceleration_on_body(
             std::shared_ptr<CelestialBody> body, double dt
+        );
+        bool is_colliding(
+            std::shared_ptr<CelestialBody> body1,
+            std::shared_ptr<CelestialBody> body2
         );
         /** Calculates the ratio width / distance to center of mass **/
         bool ratio_width_distance(const glm::vec3 &pos) const;

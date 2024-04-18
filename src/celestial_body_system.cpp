@@ -11,8 +11,7 @@
 
 void CelestialBodySystem::setup_using_json(
     axolote::gl::Shader shader_program, const char *filename
-)
-{
+) {
     assert(std::strlen(filename) > 0);
 
     using json = nlohmann::json;
@@ -20,8 +19,7 @@ void CelestialBodySystem::setup_using_json(
     std::ifstream file(filename);
     json data = json::parse(file);
     std::cout << "JSON read:" << std::endl;
-    for (auto &e : data)
-    {
+    for (auto &e : data) {
         std::cout << e.dump() << std::endl;
 
         glm::vec3 pos;
@@ -39,8 +37,7 @@ void CelestialBodySystem::setup_using_json(
 std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
     double mass, glm::vec3 pos, glm::vec3 vel,
     axolote::gl::Shader shader_program
-)
-{
+) {
     // Create object matrix
     glm::mat4 mat{1.0f};
     mat = glm::translate(mat, pos);
@@ -58,21 +55,16 @@ std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
     return body;
 }
 
-void CelestialBodySystem::build_octree()
-{
+void CelestialBodySystem::build_octree() {
     octree = OcTree{};
-    for (auto &c : celestial_bodies())
-    {
+    for (auto &c : celestial_bodies()) {
         octree.insert(c);
     }
 }
 
-void CelestialBodySystem::normal_algorithm(double dt)
-{
-    for (auto body0 : _celestial_bodies)
-    {
-        for (auto body1 : _celestial_bodies)
-        {
+void CelestialBodySystem::normal_algorithm(double dt) {
+    for (auto body0 : _celestial_bodies) {
+        for (auto body1 : _celestial_bodies) {
             if (body0 == body1)
                 continue;
 
@@ -82,17 +74,14 @@ void CelestialBodySystem::normal_algorithm(double dt)
     }
 }
 
-void CelestialBodySystem::barnes_hut_algorithm(double dt)
-{
+void CelestialBodySystem::barnes_hut_algorithm(double dt) {
     auto bodies = celestial_bodies();
     int i = -1;
-    for (auto &c : bodies)
-    {
+    for (auto &c : bodies) {
         ++i;
         if (std::abs(c->pos.x) > octree.initial_width / 2
             || std::abs(c->pos.y) > octree.initial_width / 2
-            || std::abs(c->pos.z) > octree.initial_width / 2)
-        {
+            || std::abs(c->pos.z) > octree.initial_width / 2) {
             _celestial_bodies.erase(_celestial_bodies.begin() + i);
             continue;
         }
@@ -102,14 +91,12 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt)
     }
 }
 
-void CelestialBodySystem::update(double dt)
-{
+void CelestialBodySystem::update(double dt) {
     // normal_algorithm(dt);
     barnes_hut_algorithm(dt);
 }
 
 std::vector<std::shared_ptr<CelestialBody>>
-CelestialBodySystem::celestial_bodies() const
-{
+CelestialBodySystem::celestial_bodies() const {
     return _celestial_bodies;
 }
