@@ -56,6 +56,8 @@ void App::main_loop(const char *json_filename) {
         = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
     current_scene->camera.speed = 80.0f;
     current_scene->camera.sensitivity = 10000.0f;
+    // See why this doesnt work
+    current_scene->camera.max_dist = 100.0f;
 
     // Add celestial bodies as drawable to scene
     for (auto &e : ss.celestial_bodies()) {
