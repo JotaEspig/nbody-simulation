@@ -41,10 +41,6 @@ public:
         glm::vec3 net_acceleration_on_body(
             std::shared_ptr<CelestialBody> body, double dt
         );
-        bool is_colliding(
-            std::shared_ptr<CelestialBody> body1,
-            std::shared_ptr<CelestialBody> body2
-        );
         /** Calculates the ratio width / distance to center of mass **/
         bool ratio_width_distance(const glm::vec3 &pos) const;
 

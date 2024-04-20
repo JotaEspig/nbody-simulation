@@ -49,19 +49,19 @@ void App::main_loop(const char *json_filename) {
     ss.setup_using_json(shader_program, json_filename);
 
     // Scene object
-    std::shared_ptr<axolote::Scene> scene{new axolote::Scene{}};
+    current_scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
-    scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
-    scene->camera.orientation = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
-    scene->camera.speed = 80.0f;
-    scene->camera.sensitivity = 10000.0f;
+    current_scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
+    current_scene->camera.orientation
+        = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
+    current_scene->camera.speed = 80.0f;
+    current_scene->camera.sensitivity = 10000.0f;
 
     // Add celestial bodies as drawable to scene
     for (auto &e : ss.celestial_bodies()) {
-        scene->add_drawable(e);
+        current_scene->add_drawable(e);
     }
 
-    current_scene = scene;
     double before = glfwGetTime();
     while (!should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
@@ -93,11 +93,19 @@ void App::main_loop(const char *json_filename) {
             ss.build_octree();
             ss.update(dt);
 
-            scene->update(dt);
+            auto scene = std::make_shared<axolote::Scene>();
+            scene->camera = current_scene->camera;
+
+            for (auto &e : ss.celestial_bodies()) {
+                scene->add_drawable(e);
+            }
+
+            current_scene = scene;
+            current_scene->update(dt);
         }
 
-        scene->update_camera((float)width() / height());
-        scene->render();
+        current_scene->update_camera((float)width() / height());
+        current_scene->render();
 
         glfwSwapBuffers(window);
     }

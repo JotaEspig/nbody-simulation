@@ -1,4 +1,3 @@
-#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -79,15 +78,20 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt) {
     int i = -1;
     for (auto &c : bodies) {
         ++i;
-        if (std::abs(c->pos.x) > octree.initial_width / 2
-            || std::abs(c->pos.y) > octree.initial_width / 2
-            || std::abs(c->pos.z) > octree.initial_width / 2) {
+        bool should_erase = std::abs(c->pos.x) > octree.initial_width / 2
+                            || std::abs(c->pos.y) > octree.initial_width / 2
+                            || std::abs(c->pos.z) > octree.initial_width / 2
+                            || c->merged;
+        if (should_erase) {
             _celestial_bodies.erase(_celestial_bodies.begin() + i);
             continue;
         }
 
         glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
-        c->velocity += acc * (float)dt;
+        if (c->merged)
+            _celestial_bodies.erase(_celestial_bodies.begin() + i);
+        else
+            c->velocity += acc * (float)dt;
     }
 }
 

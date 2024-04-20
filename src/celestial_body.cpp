@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cmath>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -8,16 +10,16 @@
 CelestialBody::CelestialBody(
     double mass, const glm::vec3 &velocity, const glm::vec3 &pos
 ) :
-  mass{mass},
   velocity{velocity},
   pos{pos} {
+    set_mass(mass);
 }
 
 glm::vec3 CelestialBody::calculate_acceleration_vec(const CelestialBody &other
 ) const {
     glm::vec3 direction = glm::normalize(other.pos - pos);
     double r = glm::distance(pos, other.pos);
-    float gravitational_acceleration = (G * other.mass) / (r * r);
+    float gravitational_acceleration = (G * other._mass) / (r * r);
     return direction * gravitational_acceleration;
 }
 
@@ -30,13 +32,32 @@ glm::vec3 CelestialBody::calculate_acceleration_vec(
     return direction * gravitational_acceleration;
 }
 
-bool CelestialBody::is_colinding(const CelestialBody &other) {
-    return (radius + other.radius) > glm::distance(pos, other.pos);
+bool CelestialBody::is_colinding(const CelestialBody &other) const {
+    return (_radius + other._radius) > glm::distance(pos, other.pos);
+}
+
+void CelestialBody::merge(std::shared_ptr<CelestialBody> other) {
+    set_mass(_mass + other->_mass);
+    other->merged = true;
+}
+
+double CelestialBody::mass() const {
+    return _mass;
+}
+
+void CelestialBody::set_mass(double mass) {
+    _mass = mass;
+    _radius = std::max(1.0, std::log2(mass));
+}
+
+float CelestialBody::radius() const {
+    return _radius;
 }
 
 void CelestialBody::update(double dt) {
     pos += velocity * (float)dt;
     glm::mat4 mat = glm::translate(glm::mat4{1.0f}, pos);
+    mat = glm::scale(mat, glm::vec3{_radius, _radius, _radius});
     set_matrix(0, mat);
 }
 

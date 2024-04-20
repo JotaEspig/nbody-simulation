@@ -7,17 +7,24 @@
 
 class CelestialBody : public axolote::Entity {
 public:
-    double mass;
     glm::vec3 velocity;
     glm::vec3 pos;
-    float radius = 1.0f;
+    bool merged = false;
 
     CelestialBody(double mass, const glm::vec3 &velocity, const glm::vec3 &pos);
 
     glm::vec3 calculate_acceleration_vec(const CelestialBody &other) const;
     glm::vec3
     calculate_acceleration_vec(const glm::vec3 &pos, double mass) const;
-    bool is_colinding(const CelestialBody &other);
+    bool is_colinding(const CelestialBody &other) const;
+    void merge(std::shared_ptr<CelestialBody> other);
+    double mass() const;
+    void set_mass(double mass);
+    float radius() const;
     void update(double dt) override;
     void draw() override;
+
+protected:
+    double _mass;
+    float _radius = 1.0f;
 };
