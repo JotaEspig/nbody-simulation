@@ -47,7 +47,7 @@ double CelestialBody::mass() const {
 
 void CelestialBody::set_mass(double mass) {
     _mass = mass;
-    _radius = std::max(0.3, std::log(_mass) / std::log(5));
+    _radius = std::max(0.5, std::log2(_mass));
 }
 
 float CelestialBody::radius() const {
