@@ -93,7 +93,6 @@ void App::main_loop(const char *json_filename) {
         if (!pause) {
             dt *= DT_MULTIPLIER;
 
-            ss.build_octree();
             ss.update(dt);
 
             auto scene = std::make_shared<axolote::Scene>();

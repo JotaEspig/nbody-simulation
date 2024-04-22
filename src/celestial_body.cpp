@@ -37,7 +37,10 @@ bool CelestialBody::is_colinding(const CelestialBody &other) const {
 }
 
 void CelestialBody::merge(std::shared_ptr<CelestialBody> other) {
-    set_mass(_mass + other->_mass);
+    float new_mass = _mass + other->_mass;
+    velocity = ((float)_mass * velocity + (float)other->_mass * other->velocity)
+               / (new_mass);
+    set_mass(new_mass);
     other->merged = true;
 }
 

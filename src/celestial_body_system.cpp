@@ -74,25 +74,24 @@ void CelestialBodySystem::normal_algorithm(double dt) {
 }
 
 void CelestialBodySystem::barnes_hut_algorithm(double dt) {
-    auto bodies = celestial_bodies();
-    int i = -1;
-    for (auto &c : bodies) {
-        ++i;
+    build_octree();
+
+    std::vector<std::shared_ptr<CelestialBody>> active_bodies;
+    for (auto &c : _celestial_bodies) {
         bool should_erase = std::abs(c->pos.x) > octree.initial_width / 2
                             || std::abs(c->pos.y) > octree.initial_width / 2
                             || std::abs(c->pos.z) > octree.initial_width / 2
                             || c->merged;
-        if (should_erase) {
-            _celestial_bodies.erase(_celestial_bodies.begin() + i);
-            continue;
-        }
-
-        glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
-        if (c->merged)
-            _celestial_bodies.erase(_celestial_bodies.begin() + i);
-        else
+        if (!should_erase) {
+            active_bodies.push_back(c);
+            glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
             c->velocity += acc * (float)dt;
+        }
+        else
+            std::cout << c.get() << " deleted" << std::endl;
     }
+
+    _celestial_bodies = active_bodies;
 }
 
 void CelestialBodySystem::update(double dt) {

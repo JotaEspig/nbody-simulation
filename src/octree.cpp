@@ -36,13 +36,9 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
             return;
         }
         else if (Node::body->is_colinding(*body)) {
-            if (Node::body->mass() > body->mass()) {
-                Node::body->merge(body);
-            }
-            else {
-                body->merge(Node::body);
-                Node::body = body;
-            }
+            Node::body->merge(body);
+            center_of_mass = Node::body->pos;
+            total_mass += m2;
             return;
         }
 
@@ -160,17 +156,6 @@ glm::vec3 OcTree::Node::net_acceleration_on_body(
     if (is_leaf) {
         if (Node::body == nullptr || Node::body == body || Node::body->merged)
             return glm::vec3{0.0f, 0.0f, 0.0f};
-
-        if (Node::body->is_colinding(*body)) {
-            if (Node::body->mass() > body->mass()) {
-                Node::body->merge(body);
-            }
-            else {
-                body->merge(Node::body);
-            }
-
-            return glm::vec3{0.0f, 0.0f, 0.0f};
-        }
 
         return body->calculate_acceleration_vec(*Node::body);
     }
@@ -308,7 +293,8 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body) {
         root->body = body;
     }
     else {
-        root->insert(body);
+        if (!body->merged)
+            root->insert(body);
     }
 }
 
