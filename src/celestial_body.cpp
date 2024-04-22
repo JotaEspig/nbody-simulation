@@ -62,5 +62,26 @@ void CelestialBody::update(double dt) {
 }
 
 void CelestialBody::draw() {
+    // hardcoded mass base
+    double max_mass = 200.0;
+    glm::vec3 color{
+        std::min(_mass / max_mass, 1.0),
+        1.0f - 0.5f * std::min(_mass / max_mass, 1.0),
+        1.0f - std::min(_mass / max_mass, 1.0)
+    };
+
+    for (auto &o : objects) {
+        for (auto &m : o.model->meshes) {
+            m.shader.set_uniform_int("is_color_uniform_set", 1);
+            m.shader.set_uniform_float3(
+                "color_uniform", color.x, color.y, color.z
+            );
+        }
+    }
     Entity::draw();
+    for (auto &o : objects) {
+        for (auto &m : o.model->meshes) {
+            m.shader.set_uniform_int("is_color_uniform_set", 0);
+        }
+    }
 };
