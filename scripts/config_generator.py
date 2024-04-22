@@ -149,7 +149,6 @@ def gen_galaxy() -> List[dict]:
                 vec_z = pos_z - pos_z_offset
                 distance = (vec_x ** 2 + vec_y ** 2 + vec_z ** 2) ** 0.5
                 obj_orbital_speed = orbital_speed(central_massive_body_mass, distance)
-                print(obj_orbital_speed)
                 if vec_x == 0:
                     aux = vec_y
                     vec_y = vec_z
