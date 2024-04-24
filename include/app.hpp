@@ -2,8 +2,6 @@
 
 #include <axolote/engine.hpp>
 
-#define DT_MULTIPLIER 1000000
-
 class App : public axolote::Window {
 public:
     bool pause = false;

@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -9,18 +8,14 @@
 #include "octree.hpp"
 
 void CelestialBodySystem::setup_using_json(
-    axolote::gl::Shader shader_program, const char *filename
+    axolote::gl::Shader shader_program, nlohmann::json &data
 ) {
     assert(std::strlen(filename) > 0);
 
     using json = nlohmann::json;
 
-    std::ifstream file(filename);
-    json data = json::parse(file);
-    std::cout << "JSON read:" << std::endl;
-    for (auto &e : data) {
-        std::cout << e.dump() << std::endl;
-
+    json bodies = data["bodies"];
+    for (auto &e : bodies) {
         glm::vec3 pos;
         glm::vec3 vel;
         pos.x = e["pos"]["x"];
@@ -87,11 +82,9 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt) {
             glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
             c->velocity += acc * (float)dt;
         }
-        else
-            std::cout << c.get() << " deleted" << std::endl;
     }
 
-    _celestial_bodies = active_bodies;
+    _celestial_bodies = std::move(active_bodies);
 }
 
 void CelestialBodySystem::update(double dt) {

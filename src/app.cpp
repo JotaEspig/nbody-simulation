@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -5,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <nlohmann/json.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
@@ -25,6 +27,11 @@ void App::process_input(float delta_t) {
 }
 
 void App::main_loop(const char *json_filename) {
+    using json = nlohmann::json;
+    std::ifstream file(json_filename);
+    json data = json::parse(file);
+    double dt_multiplier = data["dt_multiplier"];
+
     std::string original_title = title();
 
     axolote::gl::Shader shader_program(
@@ -46,7 +53,7 @@ void App::main_loop(const char *json_filename) {
 
     // Celestial Body system
     CelestialBodySystem ss;
-    ss.setup_using_json(shader_program, json_filename);
+    ss.setup_using_json(shader_program, data);
 
     // Scene object
     current_scene = std::make_shared<axolote::Scene>();
@@ -72,15 +79,6 @@ void App::main_loop(const char *json_filename) {
 
         glfwPollEvents();
 
-        // auto x = ss.celestial_bodies();
-        // glm::vec3 mid_point{
-        //     (x[0]->pos.x + x[1]->pos.x + x[2]->pos.x) / 3,
-        //     (x[0]->pos.y + x[1]->pos.y + x[2]->pos.y) / 3,
-        //     (x[0]->pos.z + x[1]->pos.z + x[2]->pos.z) / 3
-        // };
-        // current_scene->camera.orientation
-        //     = glm::normalize(mid_point - current_scene->camera.pos);
-
         double now = glfwGetTime();
         double dt = now - before;
         before = now;
@@ -91,7 +89,7 @@ void App::main_loop(const char *json_filename) {
         set_title(sstr.str());
 
         if (!pause) {
-            dt *= DT_MULTIPLIER;
+            dt *= dt_multiplier;
 
             ss.update(dt);
 

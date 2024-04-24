@@ -8,7 +8,7 @@ GALAXY = 1
 G = 6.67 * 10 ** -11
 
 
-def save_config(config_dict: List[dict]) -> None:
+def save_config(config_dict: dict) -> None:
     print("type the filename:")
     filename = input("> ")
     with open(f"./config/auto_gen_{filename}.json", "w") as file:
@@ -168,21 +168,27 @@ def gen_galaxy() -> List[dict]:
                 obj["velocity"] = {"x": vec_x * obj_orbital_speed, "y": vec_y * obj_orbital_speed, "z": vec_z * obj_orbital_speed}
 
                 config_dict.append(obj)
-                counter += step
-                obj_count += 1
+
+            counter += step
+            obj_count += 1
 
     return config_dict
 
 
 def gen_file(type: int) -> None:
-    config_dict: List[dict]
+    print("Delta time multiplier (how many times will the time be accelerated): ")
+    dt_multiplier = float(input("> "))
+
+    config_dict = dict()
+    config_dict["dt_multiplier"] = dt_multiplier
     if type == BINARY:
-        config_dict = gen_binary()
+        config_dict["bodies"] = gen_binary()
     elif type == GALAXY:
-        config_dict = gen_galaxy()
+        config_dict["bodies"] = gen_galaxy()
     else:
         print("Invalid celestial body system type!")
         return
+
 
     save_config(config_dict)
 
