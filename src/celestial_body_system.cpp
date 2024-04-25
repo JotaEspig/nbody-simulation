@@ -10,8 +10,6 @@
 void CelestialBodySystem::setup_using_json(
     axolote::gl::Shader shader_program, nlohmann::json &data
 ) {
-    assert(std::strlen(filename) > 0);
-
     using json = nlohmann::json;
 
     json bodies = data["bodies"];

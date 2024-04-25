@@ -42,11 +42,15 @@ public:
             std::shared_ptr<CelestialBody> body, double dt
         );
         /** Calculates the ratio width / distance to center of mass **/
-        bool ratio_width_distance(const glm::vec3 &pos) const;
+        double ratio_width_distance(const glm::vec3 &pos) const;
 
         friend std::ostream &operator<<(std::ostream &os, Node node);
         friend std::ostream &
         operator<<(std::ostream &os, std::unique_ptr<Node> &node);
+
+    private:
+        bool should_be_called(const std::shared_ptr<CelestialBody> &other
+        ) const;
     };
 
     /** Simulation precision parameter, a high value means a low simulation

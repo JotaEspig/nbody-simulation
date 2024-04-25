@@ -163,19 +163,27 @@ glm::vec3 OcTree::Node::net_acceleration_on_body(
         return body->calculate_acceleration_vec(center_of_mass, total_mass);
     }
 
-    glm::vec3 net_acceleration{};
-    net_acceleration += luf->net_acceleration_on_body(body, dt);
-    net_acceleration += lub->net_acceleration_on_body(body, dt);
-    net_acceleration += lbf->net_acceleration_on_body(body, dt);
-    net_acceleration += lbb->net_acceleration_on_body(body, dt);
-    net_acceleration += ruf->net_acceleration_on_body(body, dt);
-    net_acceleration += rub->net_acceleration_on_body(body, dt);
-    net_acceleration += rbf->net_acceleration_on_body(body, dt);
-    net_acceleration += rbb->net_acceleration_on_body(body, dt);
+    glm::vec3 net_acceleration{0.0f, 0.0f, 0.0f};
+    if (luf->should_be_called(body))
+        net_acceleration += luf->net_acceleration_on_body(body, dt);
+    if (lub->should_be_called(body))
+        net_acceleration += lub->net_acceleration_on_body(body, dt);
+    if (lbf->should_be_called(body))
+        net_acceleration += lbf->net_acceleration_on_body(body, dt);
+    if (lbb->should_be_called(body))
+        net_acceleration += lbb->net_acceleration_on_body(body, dt);
+    if (ruf->should_be_called(body))
+        net_acceleration += ruf->net_acceleration_on_body(body, dt);
+    if (rub->should_be_called(body))
+        net_acceleration += rub->net_acceleration_on_body(body, dt);
+    if (rbf->should_be_called(body))
+        net_acceleration += rbf->net_acceleration_on_body(body, dt);
+    if (rbb->should_be_called(body))
+        net_acceleration += rbb->net_acceleration_on_body(body, dt);
     return net_acceleration;
 }
 
-bool OcTree::Node::ratio_width_distance(const glm::vec3 &pos) const {
+double OcTree::Node::ratio_width_distance(const glm::vec3 &pos) const {
     return width / glm::distance(pos, center_of_mass);
 }
 
@@ -265,6 +273,11 @@ operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node) {
     return os;
 }
 
+bool OcTree::Node::should_be_called(const std::shared_ptr<CelestialBody> &other
+) const {
+    return !(is_leaf && (body == nullptr || body == other || body->merged));
+}
+
 // ---- OCTREE ----
 
 double OcTree::theta = 1.0;
@@ -293,7 +306,11 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body) {
         root->body = body;
     }
     else {
-        if (!body->merged)
+        bool should_erase = std::abs(body->pos.x) > initial_width / 2
+                            || std::abs(body->pos.y) > initial_width / 2
+                            || std::abs(body->pos.z) > initial_width / 2
+                            || body->merged;
+        if (!should_erase)
             root->insert(body);
     }
 }
