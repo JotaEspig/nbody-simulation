@@ -165,7 +165,9 @@ def gen_galaxy() -> List[dict]:
                 vec_x = normalize(vec_x, distance)
                 vec_y = normalize(vec_y, distance)
                 vec_z = normalize(vec_z, distance)
-                obj["velocity"] = {"x": vec_x * obj_orbital_speed, "y": vec_y * obj_orbital_speed, "z": vec_z * obj_orbital_speed}
+                obj["velocity"] = {"x": vec_x * obj_orbital_speed + velocity_x,
+                                   "y": vec_y * obj_orbital_speed + velocity_y,
+                                   "z": vec_z * obj_orbital_speed + velocity_z}
 
                 config_dict.append(obj)
 
