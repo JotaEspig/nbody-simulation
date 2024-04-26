@@ -22,6 +22,9 @@ public:
 
     void
     setup_using_json(axolote::gl::Shader shader_program, nlohmann::json &data);
+    void setup_using_baked_frame_json(
+        axolote::gl::Shader shader_program, nlohmann::json &data
+    );
     std::shared_ptr<CelestialBody> add_celestial_body(
         double mass, glm::vec3 pos, glm::vec3 vel,
         axolote::gl::Shader shader_program

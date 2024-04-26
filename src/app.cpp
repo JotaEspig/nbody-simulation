@@ -1,8 +1,12 @@
 #include <cstddef>
 #include <fstream>
+#include <iomanip>
+#include <ios>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -17,15 +21,22 @@
 
 struct BodyDataJSON {
     double mass;
-    double pos_x, pos_y, pos_z;
+    float pos_x, pos_y, pos_z;
 };
 
 void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
+    // use abbreviations to minimize file size
+    std::stringstream ssx;
+    ssx << std::fixed << std::setprecision(3) << body_data.pos_x;
+    std::stringstream ssy;
+    ssy << std::fixed << std::setprecision(3) << body_data.pos_y;
+    std::stringstream ssz;
+    ssz << std::fixed << std::setprecision(3) << body_data.pos_z;
     j = {
-        {"mass", body_data.mass},
-        {"pos_x", body_data.pos_x},
-        {"pos_y", body_data.pos_y},
-        {"pos_z", body_data.pos_z},
+        {"m", body_data.mass},
+        {"px", ssx.str()},
+        {"py", ssy.str()},
+        {"pz", ssz.str()},
     };
 }
 
@@ -136,21 +147,18 @@ void App::bake(const char *json_filename) {
     CelestialBodySystem ss;
     ss.setup_using_json(shader_program, data);
 
+    std::cout << "LET HIM COOK!" << std::endl
+              << "DO NOT PRESS Ctrl+C" << std::endl;
+
     std::string s = std::string{json_filename} + ".baked";
     std::ofstream outputfile{s};
-    std::vector<std::vector<BodyDataJSON>> processed_frames;
     std::size_t counter = 0;
+    outputfile << "[" << std::endl;
     while (!should_close()) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glfwPollEvents();
-
-        ++counter;
-        if (counter % 60 == 0) {
-            std::cout << "Rendered: " << counter / 60 << " seconds"
-                      << std::endl;
-        }
 
         double dt = 1.0 / 60;
         dt *= dt_multiplier;
@@ -159,19 +167,113 @@ void App::bake(const char *json_filename) {
 
         ss.update(dt);
 
-        std::vector<BodyDataJSON> processed_bodies;
+        int i = 0;
+        int size = ss.celestial_bodies().size();
+        outputfile << "[";
         for (auto &c : ss.celestial_bodies()) {
-            processed_bodies.push_back({c->mass(), c->pos.x, c->pos.y, c->pos.z}
-            );
+            BodyDataJSON b = {c->mass(), c->pos.x, c->pos.y, c->pos.z};
+            json outputjson = b;
+            outputfile << outputjson;
+            if (i < size - 1) {
+                outputfile << ",";
+            }
+            ++i;
         }
-        processed_frames.push_back(processed_bodies);
+        outputfile << "]";
+
+        ++counter;
+        if (counter % 60 == 0) {
+            std::cout << "Rendered: " << counter / 60
+                      << " seconds --- DO NOT PRESS Ctrl+C" << std::endl;
+        }
+
+        if (!should_close()) {
+            outputfile << ",";
+        }
+        outputfile << std::endl;
 
         glfwSwapBuffers(window);
     }
 
-    json outputjson = processed_frames;
-    outputfile << outputjson << std::endl;
+    outputfile << "]" << std::endl;
 }
 
 void App::render_loop(const char *json_filename) {
+    using json = nlohmann::json;
+
+    pause = true;
+    std::string original_title = title();
+
+    axolote::gl::Shader shader_program(
+        "./resources/shaders/vertex_shader.glsl",
+        "./resources/shaders/fragment_shader.glsl"
+    );
+
+    shader_program.activate();
+    shader_program.set_uniform_int("light.is_set", 0);
+
+    // Celestial Body system
+    CelestialBodySystem ss;
+
+    // Scene object
+    current_scene = std::make_shared<axolote::Scene>();
+    // Configs camera (points it downwards)
+    current_scene->camera.fov = 70.0f;
+    current_scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
+    current_scene->camera.orientation
+        = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
+    current_scene->camera.speed = 80.0f;
+    current_scene->camera.sensitivity = 10000.0f;
+    // See why this doesnt work
+    current_scene->camera.max_dist = 100.0f;
+
+    std::ifstream file(json_filename);
+    std::string line;
+    file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    double before = glfwGetTime();
+    while (!file.eof() && !should_close()) {
+        glClearColor(_color.r, _color.g, _color.b, _color.opacity);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glfwPollEvents();
+
+        double now = glfwGetTime();
+        double dt = now - before;
+        before = now;
+        process_input(dt);
+
+        std::stringstream sstr;
+        sstr << original_title << " | " << (int)(1 / dt) << " fps";
+        set_title(sstr.str());
+
+        if (!pause) {
+            std::getline(file, line);
+            if (line == "]") {
+                pause = true;
+                continue;
+            }
+            else if (line.back() == ',') {
+                line.pop_back();
+            }
+
+            json j = json::parse(line);
+
+            auto scene = std::make_shared<axolote::Scene>();
+            scene->camera = current_scene->camera;
+
+            ss.setup_using_baked_frame_json(shader_program, j);
+            for (auto &e : ss.celestial_bodies()) {
+                scene->add_drawable(e);
+            }
+
+            current_scene = scene;
+            current_scene->update(dt);
+        }
+
+        current_scene->update_camera((float)width() / height());
+        current_scene->render();
+
+        glfwSwapBuffers(window);
+    }
 }

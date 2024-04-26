@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 
 #include <axolote/object3d.hpp>
@@ -12,6 +11,7 @@ void CelestialBodySystem::setup_using_json(
 ) {
     using json = nlohmann::json;
 
+    _celestial_bodies.clear();
     json bodies = data["bodies"];
     for (auto &e : bodies) {
         glm::vec3 pos;
@@ -23,6 +23,24 @@ void CelestialBodySystem::setup_using_json(
         vel.y = e["velocity"]["y"];
         vel.z = e["velocity"]["z"];
         add_celestial_body(e["mass"], pos, vel, shader_program);
+    }
+}
+
+void CelestialBodySystem::setup_using_baked_frame_json(
+    axolote::gl::Shader shader_program, nlohmann::json &data
+) {
+    _celestial_bodies.clear();
+    for (auto &e : data) {
+        double mass = e["m"];
+        glm::vec3 pos;
+        glm::vec3 vel{0.0f, 0.0f, 0.0f};
+        std::string xstr = e["px"];
+        std::string ystr = e["py"];
+        std::string zstr = e["pz"];
+        pos.x = std::stof(xstr);
+        pos.y = std::stof(ystr);
+        pos.z = std::stof(zstr);
+        add_celestial_body(mass, pos, vel, shader_program);
     }
 }
 
