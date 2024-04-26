@@ -136,7 +136,7 @@ void App::bake(const char *json_filename) {
     CelestialBodySystem ss;
     ss.setup_using_json(shader_program, data);
 
-    std::string s = "./config/baked.json";
+    std::string s = std::string{json_filename} + ".baked";
     std::ofstream outputfile{s};
     std::vector<std::vector<BodyDataJSON>> processed_frames;
     std::size_t counter = 0;
