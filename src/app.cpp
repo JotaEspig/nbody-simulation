@@ -1,7 +1,9 @@
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,6 +14,20 @@
 
 #include "app.hpp"
 #include "celestial_body_system.hpp"
+
+struct BodyDataJSON {
+    double mass;
+    double pos_x, pos_y, pos_z;
+};
+
+void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
+    j = {
+        {"mass", body_data.mass},
+        {"pos_x", body_data.pos_x},
+        {"pos_y", body_data.pos_y},
+        {"pos_z", body_data.pos_z},
+    };
+}
 
 void App::process_input(float delta_t) {
     Window::process_input(delta_t);
@@ -41,15 +57,6 @@ void App::main_loop(const char *json_filename) {
 
     shader_program.activate();
     shader_program.set_uniform_int("light.is_set", 0);
-
-    // Table with planets data:
-    // https://nssdc.gsfc.nasa.gov/planetary/factsheet/
-
-    // website used for initial velocity calculation:
-    // https://pt.calcprofi.com/calculadora-formula-velocidade-orbital.html
-    // using: parâmetros -> km, kg and m/s
-
-    // --------------------------------------------------------------------
 
     // Celestial Body system
     CelestialBodySystem ss;
@@ -109,4 +116,62 @@ void App::main_loop(const char *json_filename) {
 
         glfwSwapBuffers(window);
     }
+}
+
+void App::bake(const char *json_filename) {
+    using json = nlohmann::json;
+    std::ifstream file(json_filename);
+    json data = json::parse(file);
+    double dt_multiplier = data["dt_multiplier"];
+
+    // The shader is create just because it's needed in setup_using_json
+    axolote::gl::Shader shader_program(
+        "./resources/shaders/vertex_shader.glsl",
+        "./resources/shaders/fragment_shader.glsl"
+    );
+    // Current scene is needed for process input from user
+    current_scene = std::make_shared<axolote::Scene>();
+
+    // Celestial Body system
+    CelestialBodySystem ss;
+    ss.setup_using_json(shader_program, data);
+
+    std::string s = "./config/baked.json";
+    std::ofstream outputfile{s};
+    std::vector<std::vector<BodyDataJSON>> processed_frames;
+    std::size_t counter = 0;
+    while (!should_close()) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glfwPollEvents();
+
+        ++counter;
+        if (counter % 60 == 0) {
+            std::cout << "Rendered: " << counter / 60 << " seconds"
+                      << std::endl;
+        }
+
+        double dt = 1.0 / 60;
+        dt *= dt_multiplier;
+
+        process_input(dt);
+
+        ss.update(dt);
+
+        std::vector<BodyDataJSON> processed_bodies;
+        for (auto &c : ss.celestial_bodies()) {
+            processed_bodies.push_back({c->mass(), c->pos.x, c->pos.y, c->pos.z}
+            );
+        }
+        processed_frames.push_back(processed_bodies);
+
+        glfwSwapBuffers(window);
+    }
+
+    json outputjson = processed_frames;
+    outputfile << outputjson << std::endl;
+}
+
+void App::render_loop(const char *json_filename) {
 }

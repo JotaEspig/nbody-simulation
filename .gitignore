@@ -22,3 +22,4 @@ external/lib/axolote
 # files
 compile_commands.json
 auto_gen_*.json
+baked*.json

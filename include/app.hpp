@@ -8,5 +8,7 @@ public:
     bool is_pause_key_press = false;
 
     void main_loop(const char *json_filename = "");
+    void bake(const char *json_filename);
+    void render_loop(const char *json_filename = "");
     void process_input(float delta_t = 1.0f);
 };
