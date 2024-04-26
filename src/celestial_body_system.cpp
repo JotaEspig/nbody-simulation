@@ -62,6 +62,7 @@ void CelestialBodySystem::normal_algorithm(double dt) {
 
             glm::vec3 acc = body0->calculate_acceleration_vec(*body1);
             body0->velocity += acc * (float)dt;
+            body0->pos += body0->velocity * (float)dt;
         }
     }
 }
@@ -79,6 +80,7 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt) {
             active_bodies.push_back(c);
             glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
             c->velocity += acc * (float)dt;
+            c->pos += c->velocity * (float)dt;
         }
     }
 

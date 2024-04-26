@@ -7,6 +7,8 @@
 #include "celestial_body.hpp"
 #include "constants.hpp"
 
+#define UNUSED(x) (void)(x)
+
 CelestialBody::CelestialBody(
     double mass, const glm::vec3 &velocity, const glm::vec3 &pos
 ) :
@@ -59,7 +61,7 @@ float CelestialBody::radius() const {
 }
 
 void CelestialBody::update(double dt) {
-    pos += velocity * (float)dt;
+    UNUSED(dt);
     glm::mat4 mat = glm::translate(glm::mat4{1.0f}, pos);
     mat = glm::scale(mat, glm::vec3{_radius, _radius, _radius});
     set_matrix(0, mat);
