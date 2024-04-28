@@ -19,6 +19,8 @@
 #include "app.hpp"
 #include "celestial_body_system.hpp"
 
+#define UNUSED(x) (void)(x)
+
 struct BodyDataJSON {
     double mass;
     float pos_x, pos_y, pos_z;
@@ -53,6 +55,35 @@ void App::process_input(float delta_t) {
     }
 }
 
+void App::process_input_real_time_mode(float delta_t) {
+    UNUSED(delta_t);
+    bool mouse1_key_state = glfwGetKey(window, GLFW_KEY_X);
+    if (mouse1_key_state == GLFW_PRESS && !is_throw_obj_key_press) {
+        // Gets intersection between plan and line
+        // (Hardcoded plan, a different normal vector wouldn't work)
+        // plan : y = 0
+        // line : initial point + t * vec_dir
+        /*
+        glm::vec3 initial_point = current_scene->camera.pos;
+        glm::vec3 vec_dir = current_scene->camera.orientation;
+        float t = -initial_point.y / vec_dir.y;
+        float x = initial_point.x + t * vec_dir.x;
+        float z = initial_point.z + t * vec_dir.z;
+        glm::vec3 pos{x, 0.0f, z};
+        glm::vec3 vel{vec_dir.x / 40000, 0.0f, vec_dir.z / 40000}; */
+
+        glm::vec3 pos = current_scene->camera.pos;
+        glm::vec3 vel = (1.0f / 40000) * current_scene->camera.orientation;
+
+        bodies_system.add_celestial_body(100, pos, vel, shader_program);
+
+        is_throw_obj_key_press = true;
+    }
+    else if (mouse1_key_state == GLFW_RELEASE && is_throw_obj_key_press) {
+        is_throw_obj_key_press = false;
+    }
+}
+
 void App::main_loop(const char *json_filename) {
     using json = nlohmann::json;
     std::ifstream file(json_filename);
@@ -61,7 +92,7 @@ void App::main_loop(const char *json_filename) {
 
     std::string original_title = title();
 
-    axolote::gl::Shader shader_program(
+    shader_program = axolote::gl::Shader(
         "./resources/shaders/vertex_shader.glsl",
         "./resources/shaders/fragment_shader.glsl"
     );
@@ -70,8 +101,7 @@ void App::main_loop(const char *json_filename) {
     shader_program.set_uniform_int("light.is_set", 0);
 
     // Celestial Body system
-    CelestialBodySystem ss;
-    ss.setup_using_json(shader_program, data);
+    bodies_system.setup_using_json(shader_program, data);
 
     // Scene object
     current_scene = std::make_shared<axolote::Scene>();
@@ -86,7 +116,7 @@ void App::main_loop(const char *json_filename) {
     current_scene->camera.max_dist = 100.0f;
 
     // Add celestial bodies as drawable to scene
-    for (auto &e : ss.celestial_bodies()) {
+    for (auto &e : bodies_system.celestial_bodies()) {
         current_scene->add_drawable(e);
     }
 
@@ -101,6 +131,7 @@ void App::main_loop(const char *json_filename) {
         double dt = now - before;
         before = now;
         process_input(dt);
+        process_input_real_time_mode(dt);
 
         std::stringstream sstr;
         sstr << original_title << " | " << (int)(1 / dt) << " fps";
@@ -109,12 +140,12 @@ void App::main_loop(const char *json_filename) {
         if (!pause) {
             dt *= dt_multiplier;
 
-            ss.update(dt);
+            bodies_system.update(dt);
 
             auto scene = std::make_shared<axolote::Scene>();
             scene->camera = current_scene->camera;
 
-            for (auto &e : ss.celestial_bodies()) {
+            for (auto &e : bodies_system.celestial_bodies()) {
                 scene->add_drawable(e);
             }
 
