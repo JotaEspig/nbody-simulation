@@ -35,7 +35,7 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
             Node::body = body;
             return;
         }
-        else if (Node::body->is_colinding(*body)) {
+        else if (Node::body->is_colliding(*body)) {
             Node::body->merge(body);
             center_of_mass = Node::body->pos;
             total_mass += m2;

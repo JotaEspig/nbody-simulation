@@ -34,7 +34,7 @@ glm::vec3 CelestialBody::calculate_acceleration_vec(
     return direction * gravitational_acceleration;
 }
 
-bool CelestialBody::is_colinding(const CelestialBody &other) const {
+bool CelestialBody::is_colliding(const CelestialBody &other) const {
     return (_radius + other._radius) > glm::distance(pos, other.pos);
 }
 

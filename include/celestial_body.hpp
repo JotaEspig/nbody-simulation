@@ -16,7 +16,7 @@ public:
     glm::vec3 calculate_acceleration_vec(const CelestialBody &other) const;
     glm::vec3
     calculate_acceleration_vec(const glm::vec3 &pos, double mass) const;
-    bool is_colinding(const CelestialBody &other) const;
+    bool is_colliding(const CelestialBody &other) const;
     void merge(std::shared_ptr<CelestialBody> other);
     double mass() const;
     void set_mass(double mass);
