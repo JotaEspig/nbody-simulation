@@ -7,7 +7,7 @@ N-Body simulation using Axolote Engine
 * GLM
 * GLFW3
 * Doxygen (Optional)
-* Axolote Engine. See [https://github.com/JotaEspig/axolote-engine](https://github.com/JotaEspig/axolote-engine) 
+* Axolote Engine (version v0.3.0). See [https://github.com/JotaEspig/axolote-engine](https://github.com/JotaEspig/axolote-engine) 
 
 ## Compiling
 ```bash
