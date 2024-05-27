@@ -63,7 +63,7 @@ target_link_libraries(
     nbody-simulation
     PRIVATE
     axolote
-    ${OPENGL_LIBRARIES} glfw stdc++
+    ${OPENGL_LIBRARIES} glfw stdc++ assimp
 )
 
 # Header files
