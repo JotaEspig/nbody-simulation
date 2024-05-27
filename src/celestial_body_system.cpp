@@ -54,10 +54,8 @@ std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
 
     // Create body
     std::shared_ptr<CelestialBody> body{new CelestialBody{mass, vel, pos}};
-    axolote::Object3D obj{mat};
-    obj.model = default_body_model;
-    body->add_object(obj);
-    body->bind_shader_at(0, shader_program);
+    body->gmodel = default_body_model;
+    body->bind_shader(shader_program);
 
     // Add to list
     _celestial_bodies.push_back(body);

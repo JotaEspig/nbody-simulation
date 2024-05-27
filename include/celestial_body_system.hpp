@@ -13,7 +13,7 @@
 class CelestialBodySystem {
 public:
     OcTree octree;
-    std::shared_ptr<axolote::Model> default_body_model{new axolote::Model{
+    std::shared_ptr<axolote::GModel> default_body_model{new axolote::GModel{
         "./resources/models/sphere/sphere.obj", glm::vec3{1.0f, 1.0f, 1.0f}
     }};
 
