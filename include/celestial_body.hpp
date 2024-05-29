@@ -5,8 +5,9 @@
 
 #include <axolote/engine.hpp>
 
-class CelestialBody : public axolote::Object3D {
+class CelestialBody {
 public:
+    glm::mat4 mat{1.0f};
     glm::vec3 velocity;
     glm::vec3 pos;
     bool merged = false;
@@ -21,10 +22,11 @@ public:
     double mass() const;
     void set_mass(double mass);
     float radius() const;
-    void update(double dt) override;
-    void draw() override;
+    glm::vec3 color() const;
+    void update_values(double dt);
 
 protected:
     double _mass;
     float _radius = 1.0f;
+    glm::vec3 _color;
 };

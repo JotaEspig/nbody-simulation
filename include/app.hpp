@@ -7,9 +7,7 @@
 class App : public axolote::Window {
 public:
     bool pause = false;
-    bool is_pause_key_press = false;
-    bool is_throw_obj_key_press = false;
-    CelestialBodySystem bodies_system;
+    std::shared_ptr<CelestialBodySystem> bodies_system = std::make_shared<CelestialBodySystem>();
     axolote::gl::Shader shader_program;
 
     void main_loop(const char *json_filename = "");

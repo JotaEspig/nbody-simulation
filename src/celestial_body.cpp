@@ -60,12 +60,23 @@ float CelestialBody::radius() const {
     return _radius;
 }
 
-void CelestialBody::update(double dt) {
-    UNUSED(dt);
-    model_mat = glm::translate(glm::mat4{1.0f}, pos);
-    model_mat = glm::scale(model_mat, glm::vec3{_radius, _radius, _radius});
+glm::vec3 CelestialBody::color() const {
+    return _color;
 }
 
+void CelestialBody::update_values(double dt) {
+    UNUSED(dt);
+    mat = glm::translate(glm::mat4{1.0f}, pos);
+    mat = glm::scale(mat, glm::vec3{_radius, _radius, _radius});
+    double max_mass = 200.0;
+    _color = glm::vec3{
+        std::min(_mass / max_mass, 1.0),
+        1.0f - 0.5f * std::min(_mass / max_mass, 1.0),
+        1.0f - std::min(_mass / max_mass, 1.0)
+    };
+}
+
+/*
 void CelestialBody::draw() {
     // hardcoded mass base
     double max_mass = 200.0;
@@ -79,8 +90,8 @@ void CelestialBody::draw() {
         m.shader.set_uniform_int("is_color_uniform_set", 1);
         m.shader.set_uniform_float3("color_uniform", color.x, color.y, color.z);
     }
-    Object3D::draw();
     for (auto &m : gmodel->meshes) {
         m.shader.set_uniform_int("is_color_uniform_set", 0);
     }
 };
+*/

@@ -17,7 +17,6 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
-#include "celestial_body_system.hpp"
 
 #define UNUSED(x) (void)(x)
 
@@ -46,41 +45,28 @@ void App::process_input(float delta_t) {
     Window::process_input(delta_t);
 
     int pause_key_state = glfwGetKey(window, GLFW_KEY_P);
-    if (pause_key_state == GLFW_PRESS && !is_pause_key_press) {
-        is_pause_key_press = true;
+    if (pause_key_state == GLFW_PRESS && !_keys_pressed[GLFW_KEY_P]) {
+        _keys_pressed[GLFW_KEY_P] = true;
     }
-    else if (pause_key_state == GLFW_RELEASE && is_pause_key_press) {
+    else if (pause_key_state == GLFW_RELEASE && _keys_pressed[GLFW_KEY_P]) {
         pause = !pause;
-        is_pause_key_press = false;
+        _keys_pressed[GLFW_KEY_P] = false;
     }
 }
 
 void App::process_input_real_time_mode(float delta_t) {
     UNUSED(delta_t);
     bool mouse1_key_state = glfwGetKey(window, GLFW_KEY_X);
-    if (mouse1_key_state == GLFW_PRESS && !is_throw_obj_key_press) {
-        // Gets intersection between plan and line
-        // (Hardcoded plan, a different normal vector wouldn't work)
-        // plan : y = 0
-        // line : initial point + t * vec_dir
-        /*
-        glm::vec3 initial_point = current_scene->camera.pos;
-        glm::vec3 vec_dir = current_scene->camera.orientation;
-        float t = -initial_point.y / vec_dir.y;
-        float x = initial_point.x + t * vec_dir.x;
-        float z = initial_point.z + t * vec_dir.z;
-        glm::vec3 pos{x, 0.0f, z};
-        glm::vec3 vel{vec_dir.x / 40000, 0.0f, vec_dir.z / 40000}; */
-
+    if (mouse1_key_state == GLFW_PRESS && !_keys_pressed[GLFW_KEY_X]) {
         glm::vec3 pos = current_scene->camera.pos;
         glm::vec3 vel = (1.0f / 40000) * current_scene->camera.orientation;
 
-        bodies_system.add_celestial_body(100, pos, vel, shader_program);
+        bodies_system->add_celestial_body(100, pos, vel);
 
-        is_throw_obj_key_press = true;
+        _keys_pressed[GLFW_KEY_X] = true;
     }
-    else if (mouse1_key_state == GLFW_RELEASE && is_throw_obj_key_press) {
-        is_throw_obj_key_press = false;
+    else if (mouse1_key_state == GLFW_RELEASE && _keys_pressed[GLFW_KEY_X]) {
+        _keys_pressed[GLFW_KEY_X] = false;
     }
 }
 
@@ -101,24 +87,23 @@ void App::main_loop(const char *json_filename) {
     shader_program.set_uniform_int("light.is_set", 0);
 
     // Celestial Body system
-    bodies_system.setup_using_json(shader_program, data);
+    bodies_system->setup_using_json(data);
+    bodies_system->setup_instanced_vbo();
+    bodies_system->bind_shader(shader_program);
 
     // Scene object
     current_scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
     current_scene->camera.fov = 70.0f;
-    current_scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
+    current_scene->camera.pos = glm::vec3{0.0f, 0.0f, 10.0f};
     current_scene->camera.orientation
-        = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
-    current_scene->camera.speed = 80.0f;
+        = glm::normalize(glm::vec3{0.0f, 0.0f, -0.01f});
+    current_scene->camera.speed = 10.0f;
     current_scene->camera.sensitivity = 10000.0f;
-    // See why this doesnt work
     current_scene->camera.max_dist = 1000.0f;
 
-    // Add celestial bodies as drawable to scene
-    for (auto &e : bodies_system.celestial_bodies()) {
-        current_scene->add_drawable(e);
-    }
+    // Add system to scene
+    current_scene->add_drawable(bodies_system);
 
     double before = glfwGetTime();
     while (!should_close()) {
@@ -137,19 +122,10 @@ void App::main_loop(const char *json_filename) {
         sstr << original_title << " | " << (int)(1 / dt) << " fps";
         set_title(sstr.str());
 
+        pause = true;
         if (!pause) {
             dt *= dt_multiplier;
 
-            bodies_system.update(dt);
-
-            auto scene = std::make_shared<axolote::Scene>();
-            scene->camera = current_scene->camera;
-
-            for (auto &e : bodies_system.celestial_bodies()) {
-                scene->add_drawable(e);
-            }
-
-            current_scene = scene;
             current_scene->update(dt);
         }
 
@@ -161,75 +137,77 @@ void App::main_loop(const char *json_filename) {
 }
 
 void App::bake(const char *json_filename) {
-    using json = nlohmann::json;
-    std::ifstream file(json_filename);
-    json data = json::parse(file);
-    double dt_multiplier = data["dt_multiplier"];
+    /*
+        using json = nlohmann::json;
+        std::ifstream file(json_filename);
+        json data = json::parse(file);
+        double dt_multiplier = data["dt_multiplier"];
 
-    // The shader is create just because it's needed in setup_using_json
-    axolote::gl::Shader shader_program(
-        "./resources/shaders/vertex_shader.glsl",
-        "./resources/shaders/fragment_shader.glsl"
-    );
-    // Current scene is needed for process input from user
-    current_scene = std::make_shared<axolote::Scene>();
+        // The shader is create just because it's needed in setup_using_json
+        axolote::gl::Shader shader_program(
+            "./resources/shaders/vertex_shader.glsl",
+            "./resources/shaders/fragment_shader.glsl"
+        );
+        // Current scene is needed for process input from user
+        current_scene = std::make_shared<axolote::Scene>();
 
-    // Celestial Body system
-    CelestialBodySystem ss;
-    ss.setup_using_json(shader_program, data);
+        // Celestial Body system
+        bodies_system->setup_using_json(shader_program, data);
 
-    std::cout << "LET HIM COOK!" << std::endl
-              << "DO NOT PRESS Ctrl+C" << std::endl;
+        std::cout << "LET HIM COOK!" << std::endl
+                  << "DO NOT PRESS Ctrl+C" << std::endl;
 
-    std::string s = std::string{json_filename} + ".baked";
-    std::ofstream outputfile{s};
-    std::size_t counter = 0;
-    outputfile << "[" << std::endl;
-    while (!should_close()) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        std::string s = std::string{json_filename} + ".baked";
+        std::ofstream outputfile{s};
+        std::size_t counter = 0;
+        outputfile << "[" << std::endl;
+        while (!should_close()) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        glfwPollEvents();
+            glfwPollEvents();
 
-        double dt = 1.0 / 60;
-        dt *= dt_multiplier;
+            double dt = 1.0 / 60;
+            dt *= dt_multiplier;
 
-        process_input(dt);
+            process_input(dt);
 
-        ss.update(dt);
+            bodies_system->update(dt);
 
-        int i = 0;
-        int size = ss.celestial_bodies().size();
-        outputfile << "[";
-        for (auto &c : ss.celestial_bodies()) {
-            BodyDataJSON b = {c->mass(), c->pos.x, c->pos.y, c->pos.z};
-            json outputjson = b;
-            outputfile << outputjson;
-            if (i < size - 1) {
+            int i = 0;
+            int size = bodies_system->celestial_bodies().size();
+            outputfile << "[";
+            for (auto &c : bodies_system->celestial_bodies()) {
+                BodyDataJSON b = {c->mass(), c->pos.x, c->pos.y, c->pos.z};
+                json outputjson = b;
+                outputfile << outputjson;
+                if (i < size - 1) {
+                    outputfile << ",";
+                }
+                ++i;
+            }
+            outputfile << "]";
+
+            ++counter;
+            if (counter % 60 == 0) {
+                std::cout << "Rendered: " << counter / 60
+                          << " seconds --- DO NOT PRESS Ctrl+C" << std::endl;
+            }
+
+            if (!should_close()) {
                 outputfile << ",";
             }
-            ++i;
-        }
-        outputfile << "]";
+            outputfile << std::endl;
 
-        ++counter;
-        if (counter % 60 == 0) {
-            std::cout << "Rendered: " << counter / 60
-                      << " seconds --- DO NOT PRESS Ctrl+C" << std::endl;
+            glfwSwapBuffers(window);
         }
 
-        if (!should_close()) {
-            outputfile << ",";
-        }
-        outputfile << std::endl;
-
-        glfwSwapBuffers(window);
-    }
-
-    outputfile << "]" << std::endl;
+        outputfile << "]" << std::endl;
+    */
 }
 
 void App::render_loop(const char *json_filename) {
+    /*
     using json = nlohmann::json;
 
     pause = true;
@@ -242,9 +220,7 @@ void App::render_loop(const char *json_filename) {
 
     shader_program.activate();
     shader_program.set_uniform_int("light.is_set", 0);
-
-    // Celestial Body system
-    CelestialBodySystem ss;
+    bodies_system->shader = shader_program;
 
     // Scene object
     current_scene = std::make_shared<axolote::Scene>();
@@ -255,7 +231,6 @@ void App::render_loop(const char *json_filename) {
         = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
     current_scene->camera.speed = 80.0f;
     current_scene->camera.sensitivity = 10000.0f;
-    // See why this doesnt work
     current_scene->camera.max_dist = 1000.0f;
 
     std::ifstream file(json_filename);
@@ -293,8 +268,8 @@ void App::render_loop(const char *json_filename) {
             auto scene = std::make_shared<axolote::Scene>();
             scene->camera = current_scene->camera;
 
-            ss.setup_using_baked_frame_json(shader_program, j);
-            for (auto &e : ss.celestial_bodies()) {
+            bodies_system->setup_using_baked_frame_json(shader_program, j);
+            for (auto &e : bodies_system->celestial_bodies()) {
                 scene->add_drawable(e);
             }
 
@@ -307,4 +282,5 @@ void App::render_loop(const char *json_filename) {
 
         glfwSwapBuffers(window);
     }
+*/
 }
