@@ -15,6 +15,7 @@ CelestialBody::CelestialBody(
   velocity{velocity},
   pos{pos} {
     set_mass(mass);
+    update_matrix();
 }
 
 glm::vec3 CelestialBody::calculate_acceleration_vec(const CelestialBody &other
@@ -64,10 +65,14 @@ glm::vec3 CelestialBody::color() const {
     return _color;
 }
 
-void CelestialBody::update_values(double dt) {
-    UNUSED(dt);
+void CelestialBody::update_matrix() {
     mat = glm::translate(glm::mat4{1.0f}, pos);
     mat = glm::scale(mat, glm::vec3{_radius, _radius, _radius});
+}
+
+void CelestialBody::update_values(double dt) {
+    UNUSED(dt);
+    update_matrix();
     double max_mass = 200.0;
     _color = glm::vec3{
         std::min(_mass / max_mass, 1.0),

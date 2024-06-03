@@ -17,6 +17,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
+#include "sphere.hpp"
 
 #define UNUSED(x) (void)(x)
 
@@ -61,7 +62,7 @@ void App::process_input_real_time_mode(float delta_t) {
         glm::vec3 pos = current_scene->camera.pos;
         glm::vec3 vel = (1.0f / 40000) * current_scene->camera.orientation;
 
-        bodies_system->add_celestial_body(100, pos, vel);
+        bodies_system->add_body(100, pos, vel);
 
         _keys_pressed[GLFW_KEY_X] = true;
     }
@@ -78,18 +79,22 @@ void App::main_loop(const char *json_filename) {
 
     std::string original_title = title();
 
-    shader_program = axolote::gl::Shader(
+    axolote::gl::Shader shader_program = axolote::gl::Shader(
         "./resources/shaders/vertex_shader.glsl",
         "./resources/shaders/fragment_shader.glsl"
     );
+    axolote::gl::Shader instanced_shader_program = axolote::gl::Shader(
+        "./resources/shaders/instanced_vertex_shader.glsl",
+        "./resources/shaders/fragment_shader.glsl"
+    );
 
-    shader_program.activate();
-    shader_program.set_uniform_int("light.is_set", 0);
+    auto sphere = std::make_shared<Sphere>();
+    sphere->bind_shader(shader_program);
 
     // Celestial Body system
     bodies_system->setup_using_json(data);
     bodies_system->setup_instanced_vbo();
-    bodies_system->bind_shader(shader_program);
+    bodies_system->bind_shader(instanced_shader_program);
 
     // Scene object
     current_scene = std::make_shared<axolote::Scene>();
@@ -104,7 +109,9 @@ void App::main_loop(const char *json_filename) {
 
     // Add system to scene
     current_scene->add_drawable(bodies_system);
+    current_scene->add_drawable(sphere);
 
+    float i = 0;
     double before = glfwGetTime();
     while (!should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
@@ -122,10 +129,13 @@ void App::main_loop(const char *json_filename) {
         sstr << original_title << " | " << (int)(1 / dt) << " fps";
         set_title(sstr.str());
 
-        pause = true;
         if (!pause) {
             dt *= dt_multiplier;
 
+            sphere->set_color(
+                glm::vec3{std::sin(i / 10), std::sin(i / 20), std::sin(i / 30)}
+            );
+            ++i;
             current_scene->update(dt);
         }
 

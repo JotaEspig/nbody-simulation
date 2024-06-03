@@ -9,13 +9,12 @@
 
 #include "celestial_body.hpp"
 #include "octree.hpp"
+#include "sphere.hpp"
 
 class CelestialBodySystem : public axolote::Drawable {
 public:
     OcTree octree;
-    std::shared_ptr<axolote::GModel> gmodel{new axolote::GModel{
-        "./resources/models/sphere/sphere.obj", glm::vec3{0.0f, 0.3f, 1.0f}
-    }};
+    Sphere sphere;
 
     CelestialBodySystem() = default;
     ~CelestialBodySystem() = default;
@@ -24,8 +23,7 @@ public:
     void setup_using_baked_frame_json(nlohmann::json &data);
     void setup_instanced_vbo();
     std::shared_ptr<CelestialBody>
-    add_celestial_body(double mass, glm::vec3 pos, glm::vec3 vel);
-    void build_octree();
+    add_body(double mass, glm::vec3 pos, glm::vec3 vel);
     void normal_algorithm(double dt);
     void barnes_hut_algorithm(double dt);
     std::vector<std::shared_ptr<CelestialBody>> celestial_bodies() const;
@@ -37,6 +35,8 @@ public:
     void draw(const glm::mat4 &mat) override;
 
 private:
-    axolote::gl::VBO instancedVBO;
+    axolote::gl::VBO instanced_matrices_vbo;
     std::vector<std::shared_ptr<CelestialBody>> _celestial_bodies;
+
+    void build_octree();
 };

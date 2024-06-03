@@ -1,10 +1,13 @@
 #include <cstddef>
+#include <iostream>
 #include <memory>
+#include <vector>
 
 #include <axolote/glad/glad.h>
 #include <axolote/object3d.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 #include <nlohmann/json.hpp>
-#include <vector>
 
 #include "celestial_body_system.hpp"
 #include "octree.hpp"
@@ -23,7 +26,7 @@ void CelestialBodySystem::setup_using_json(nlohmann::json &data) {
         vel.x = e["velocity"]["x"];
         vel.y = e["velocity"]["y"];
         vel.z = e["velocity"]["z"];
-        add_celestial_body(e["mass"], pos, vel);
+        add_body(e["mass"], pos, vel);
     }
 }
 
@@ -39,7 +42,7 @@ void CelestialBodySystem::setup_using_baked_frame_json(nlohmann::json &data) {
         pos.x = std::stof(xstr);
         pos.y = std::stof(ystr);
         pos.z = std::stof(zstr);
-        add_celestial_body(mass, pos, vel);
+        add_body(mass, pos, vel);
     }
 }
 
@@ -47,53 +50,62 @@ void CelestialBodySystem::setup_instanced_vbo() {
     std::size_t amount = _celestial_bodies.size();
     std::vector<glm::mat4> model_matrices;
     for (std::size_t i = 0; i < amount; ++i) {
-        glm::mat4 mat{1.0f};
-        mat = glm::translate(mat, glm::vec3(i, 0, 0));
-        model_matrices.push_back(mat);
+        std::cout << glm::to_string(_celestial_bodies[i]->mat) << std::endl;
+        model_matrices.push_back(_celestial_bodies[i]->mat);
     }
-    //    std::vector<glm::vec3> bleee;
-    //    for (std::size_t i = 0; i < amount; ++i) {
-    //        glm::vec3 v(i * 2, i * 2, i * 2);
-    //        bleee.push_back(v);
-    //    }
 
-    instancedVBO = axolote::gl::VBO{model_matrices};
+    std::vector<glm::vec3> colors;
+    for (std::size_t i = 0; i < amount; ++i) {
+        colors.push_back(_celestial_bodies[i]->color());
+    }
+
+    axolote::gl::VAO vao = sphere.vao;
+    vao.bind();
+
+    // Colors VBO
+    sphere.colors_vbo.bind();
+    glBufferSubData(
+        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
+    );
+    vao.attrib_divisor(sphere.colors_vbo, 1, 1);
+    sphere.colors_vbo.bind();
+
+    // Instanced Matrices VBO
+    glGenBuffers(1, &instanced_matrices_vbo.id);
+    instanced_matrices_vbo.bind();
+    glBufferData(
+        GL_ARRAY_BUFFER, model_matrices.size() * sizeof(glm::mat4),
+        model_matrices.data(), GL_DYNAMIC_DRAW
+    );
+
     GLsizeiptr vec4_size = sizeof(glm::vec4);
-    for (std::size_t i = 0; i < gmodel->meshes.size(); ++i) {
-        axolote::gl::VAO vao = gmodel->meshes[i].vao;
-        vao.bind();
-        vao.link_attrib(instancedVBO, 4, 4, GL_FLOAT, vec4_size, (void *)0);
-        vao.link_attrib(
-            instancedVBO, 5, 4, GL_FLOAT, vec4_size, (void *)(vec4_size)
-        );
-        vao.link_attrib(
-            instancedVBO, 6, 4, GL_FLOAT, vec4_size, (void *)(2 * vec4_size)
-        );
-        vao.link_attrib(
-            instancedVBO, 7, 4, GL_FLOAT, vec4_size, (void *)(3 * vec4_size)
-        );
+    GLsizeiptr mat4_size = sizeof(glm::mat4);
+    vao.link_attrib(
+        instanced_matrices_vbo, 4, 4, GL_FLOAT, mat4_size, (void *)0
+    );
+    vao.link_attrib(
+        instanced_matrices_vbo, 5, 4, GL_FLOAT, mat4_size, (void *)(vec4_size)
+    );
+    vao.link_attrib(
+        instanced_matrices_vbo, 6, 4, GL_FLOAT, mat4_size,
+        (void *)(2 * vec4_size)
+    );
+    vao.link_attrib(
+        instanced_matrices_vbo, 7, 4, GL_FLOAT, mat4_size,
+        (void *)(3 * vec4_size)
+    );
 
-        vao.attrib_divisor(instancedVBO, 4, 1);
-        vao.attrib_divisor(instancedVBO, 5, 1);
-        vao.attrib_divisor(instancedVBO, 6, 1);
-        vao.attrib_divisor(instancedVBO, 7, 1);
-        vao.unbind();
-    }
+    vao.attrib_divisor(instanced_matrices_vbo, 4, 1);
+    vao.attrib_divisor(instanced_matrices_vbo, 5, 1);
+    vao.attrib_divisor(instanced_matrices_vbo, 6, 1);
+    vao.attrib_divisor(instanced_matrices_vbo, 7, 1);
+    vao.unbind();
 }
 
-std::shared_ptr<CelestialBody> CelestialBodySystem::add_celestial_body(
-    double mass, glm::vec3 pos, glm::vec3 vel
-) {
-    // Create object matrix
-    glm::mat4 mat{1.0f};
-    mat = glm::translate(mat, pos);
-
-    // Create body
+std::shared_ptr<CelestialBody>
+CelestialBodySystem::add_body(double mass, glm::vec3 pos, glm::vec3 vel) {
     std::shared_ptr<CelestialBody> body{new CelestialBody{mass, vel, pos}};
-
-    // Add to list
     _celestial_bodies.push_back(body);
-
     return body;
 }
 
@@ -144,33 +156,48 @@ CelestialBodySystem::celestial_bodies() const {
 
 void CelestialBodySystem::bind_shader(const axolote::gl::Shader &shader_program
 ) {
-    gmodel->bind_shader(shader_program);
+    sphere.bind_shader(shader_program);
 }
 
 axolote::gl::Shader CelestialBodySystem::get_shader() const {
-    return gmodel->get_shader();
+    return sphere.get_shader();
 }
 
 void CelestialBodySystem::update(double dt) {
     // normal_algorithm(dt);
     barnes_hut_algorithm(dt);
 
+    std::vector<glm::mat4> model_matrices;
+    std::vector<glm::vec3> colors;
     for (auto &c : _celestial_bodies) {
         c->update_values(dt);
+        model_matrices.push_back(c->mat);
+        colors.push_back(c->color());
     }
+
+    sphere.colors_vbo.bind();
+    glBufferSubData(
+        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
+    );
+    sphere.colors_vbo.unbind();
+
+    instanced_matrices_vbo.bind();
+    glBufferSubData(
+        GL_ARRAY_BUFFER, 0, model_matrices.size() * sizeof(glm::mat4),
+        model_matrices.data()
+    );
+    instanced_matrices_vbo.unbind();
 }
 
 void CelestialBodySystem::draw() {
     get_shader().activate();
-    for (auto &mesh : gmodel->meshes) {
-        axolote::gl::VAO vao = mesh.vao;
-        vao.bind();
-        glDrawElementsInstanced(
-            GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0,
-            _celestial_bodies.size()
-        );
-        vao.unbind();
-    }
+    axolote::gl::VAO vao = sphere.vao;
+    vao.bind();
+    glDrawElementsInstanced(
+        GL_TRIANGLES, sphere.indices().size(), GL_UNSIGNED_INT, 0,
+        _celestial_bodies.size()
+    );
+    vao.unbind();
 }
 
 void CelestialBodySystem::draw(const glm::mat4 &mat) {
