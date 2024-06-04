@@ -96,10 +96,10 @@ void App::main_loop(const char *json_filename) {
     current_scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
     current_scene->camera.fov = 70.0f;
-    current_scene->camera.pos = glm::vec3{0.0f, 0.0f, 10.0f};
+    current_scene->camera.pos = glm::vec3{0.0f, 400.0f, 0.0f};
     current_scene->camera.orientation
-        = glm::normalize(glm::vec3{0.0f, 0.0f, -0.01f});
-    current_scene->camera.speed = 10.0f;
+        = glm::normalize(glm::vec3{0.0f, -1.0f, -0.01f});
+    current_scene->camera.speed = 100.0f;
     current_scene->camera.sensitivity = 10000.0f;
     current_scene->camera.max_dist = 1000.0f;
 
