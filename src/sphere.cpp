@@ -10,34 +10,16 @@ Sphere::Sphere() {
 
     for (auto &v : model.meshes[0].vertices) {
         _vertices.push_back(v.position);
-        _colors.push_back(v.color);
     }
     _indices = model.meshes[0].indices;
 
     vao.bind();
     vertices_vbo = axolote::gl::VBO{_vertices};
-    glGenBuffers(1, &colors_vbo.id);
-    colors_vbo.bind();
-    glBufferData(
-        GL_ARRAY_BUFFER, _colors.size() * sizeof(glm::vec3), _colors.data(),
-        GL_DYNAMIC_DRAW
-    );
     indices_ebo = axolote::gl::EBO(_indices);
 
     vao.link_attrib(vertices_vbo, 0, 3, GL_FLOAT, 0, (void *)0);
-    vao.link_attrib(colors_vbo, 1, 3, GL_FLOAT, 0, (void *)0);
     vao.unbind();
     vertices_vbo.unbind();
-    colors_vbo.unbind();
-}
-
-void Sphere::set_color(const glm::vec3 &color) {
-    _colors = std::vector<glm::vec3>(_colors.size(), color);
-    colors_vbo.bind();
-    glBufferSubData(
-        GL_ARRAY_BUFFER, 0, _colors.size() * sizeof(glm::vec3), _colors.data()
-    );
-    colors_vbo.unbind();
 }
 
 void Sphere::bind_shader(const axolote::gl::Shader &shader_program) {

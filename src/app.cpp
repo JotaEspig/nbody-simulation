@@ -132,8 +132,8 @@ void App::main_loop(const char *json_filename) {
         if (!pause) {
             dt *= dt_multiplier;
 
-            sphere->set_color(
-                glm::vec3{std::sin(i / 10), std::sin(i / 20), std::sin(i / 30)}
+            sphere->get_shader().set_uniform_float3(
+                "inColor", std::sin(i / 10), std::sin(i / 20), std::sin(i / 30)
             );
             ++i;
             current_scene->update(dt);

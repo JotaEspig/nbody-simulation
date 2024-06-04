@@ -50,7 +50,6 @@ void CelestialBodySystem::setup_instanced_vbo() {
     std::size_t amount = _celestial_bodies.size();
     std::vector<glm::mat4> model_matrices;
     for (std::size_t i = 0; i < amount; ++i) {
-        std::cout << glm::to_string(_celestial_bodies[i]->mat) << std::endl;
         model_matrices.push_back(_celestial_bodies[i]->mat);
     }
 
@@ -63,23 +62,26 @@ void CelestialBodySystem::setup_instanced_vbo() {
     vao.bind();
 
     // Colors VBO
-    sphere.colors_vbo.bind();
-    glBufferSubData(
-        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
+    glGenBuffers(1, &instanced_colors_vbo.id);
+    instanced_colors_vbo.bind();
+    glBufferData(
+        GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(),
+        GL_DYNAMIC_DRAW
     );
-    vao.attrib_divisor(sphere.colors_vbo, 1, 1);
-    sphere.colors_vbo.bind();
+    vao.link_attrib(instanced_colors_vbo, 1, 3, GL_FLOAT, 0, (void *)0);
+    vao.attrib_divisor(instanced_colors_vbo, 1, 1);
+    instanced_colors_vbo.unbind();
 
     // Instanced Matrices VBO
+    GLsizeiptr vec4_size = sizeof(glm::vec4);
+    GLsizeiptr mat4_size = sizeof(glm::mat4);
+
     glGenBuffers(1, &instanced_matrices_vbo.id);
     instanced_matrices_vbo.bind();
     glBufferData(
         GL_ARRAY_BUFFER, model_matrices.size() * sizeof(glm::mat4),
         model_matrices.data(), GL_DYNAMIC_DRAW
     );
-
-    GLsizeiptr vec4_size = sizeof(glm::vec4);
-    GLsizeiptr mat4_size = sizeof(glm::mat4);
     vao.link_attrib(
         instanced_matrices_vbo, 4, 4, GL_FLOAT, mat4_size, (void *)0
     );
@@ -175,11 +177,11 @@ void CelestialBodySystem::update(double dt) {
         colors.push_back(c->color());
     }
 
-    sphere.colors_vbo.bind();
+    instanced_colors_vbo.bind();
     glBufferSubData(
         GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
     );
-    sphere.colors_vbo.unbind();
+    instanced_colors_vbo.unbind();
 
     instanced_matrices_vbo.bind();
     glBufferSubData(

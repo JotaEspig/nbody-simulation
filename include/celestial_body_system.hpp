@@ -36,6 +36,7 @@ public:
 
 private:
     axolote::gl::VBO instanced_matrices_vbo;
+    axolote::gl::VBO instanced_colors_vbo;
     std::vector<std::shared_ptr<CelestialBody>> _celestial_bodies;
 
     void build_octree();

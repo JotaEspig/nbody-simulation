@@ -8,12 +8,10 @@ class Sphere : public axolote::Drawable {
 public:
     axolote::gl::VAO vao;
     axolote::gl::VBO vertices_vbo;
-    axolote::gl::VBO colors_vbo;
     axolote::gl::EBO indices_ebo;
 
     Sphere();
 
-    void set_color(const glm::vec3 &color);
     void bind_shader(const axolote::gl::Shader &shader_program) override;
     axolote::gl::Shader get_shader() const override;
     void update(double dt) override;
@@ -23,7 +21,6 @@ public:
 
 private:
     std::vector<glm::vec3> _vertices;
-    std::vector<glm::vec3> _colors;
     std::vector<GLuint> _indices;
     axolote::gl::Shader shader;
 };
