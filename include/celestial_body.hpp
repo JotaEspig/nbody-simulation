@@ -24,7 +24,7 @@ public:
     float radius() const;
     glm::vec3 color() const;
     void update_matrix();
-    void update_values(double dt);
+    void update_values();
 
 protected:
     double _mass;

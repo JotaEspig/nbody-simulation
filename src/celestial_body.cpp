@@ -70,15 +70,14 @@ void CelestialBody::update_matrix() {
     mat = glm::scale(mat, glm::vec3{_radius, _radius, _radius});
 }
 
-void CelestialBody::update_values(double dt) {
-    UNUSED(dt);
-    update_matrix();
+void CelestialBody::update_values() {
     double max_mass = 200.0;
     _color = glm::vec3{
         std::min(_mass / max_mass, 1.0),
         1.0f - 0.5f * std::min(_mass / max_mass, 1.0),
         1.0f - std::min(_mass / max_mass, 1.0)
     };
+    update_matrix();
 }
 
 /*

@@ -27,6 +27,7 @@ public:
     void normal_algorithm(double dt);
     void barnes_hut_algorithm(double dt);
     std::vector<std::shared_ptr<CelestialBody>> celestial_bodies() const;
+    void update_vbos();
 
     void bind_shader(const axolote::gl::Shader &shader_program) override;
     axolote::gl::Shader get_shader() const override;

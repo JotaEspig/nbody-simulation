@@ -102,6 +102,8 @@ void CelestialBodySystem::setup_instanced_vbo() {
     vao.attrib_divisor(instanced_matrices_vbo, 6, 1);
     vao.attrib_divisor(instanced_matrices_vbo, 7, 1);
     vao.unbind();
+
+    update_vbos();
 }
 
 std::shared_ptr<CelestialBody>
@@ -156,6 +158,28 @@ CelestialBodySystem::celestial_bodies() const {
     return _celestial_bodies;
 }
 
+void CelestialBodySystem::update_vbos() {
+    std::vector<glm::mat4> model_matrices;
+    std::vector<glm::vec3> colors;
+    for (auto &c : _celestial_bodies) {
+        c->update_values();
+        model_matrices.push_back(c->mat);
+        colors.push_back(c->color());
+    }
+    instanced_colors_vbo.bind();
+    glBufferSubData(
+        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
+    );
+    instanced_colors_vbo.unbind();
+
+    instanced_matrices_vbo.bind();
+    glBufferSubData(
+        GL_ARRAY_BUFFER, 0, model_matrices.size() * sizeof(glm::mat4),
+        model_matrices.data()
+    );
+    instanced_matrices_vbo.unbind();
+}
+
 void CelestialBodySystem::bind_shader(const axolote::gl::Shader &shader_program
 ) {
     sphere.bind_shader(shader_program);
@@ -169,26 +193,7 @@ void CelestialBodySystem::update(double dt) {
     // normal_algorithm(dt);
     barnes_hut_algorithm(dt);
 
-    std::vector<glm::mat4> model_matrices;
-    std::vector<glm::vec3> colors;
-    for (auto &c : _celestial_bodies) {
-        c->update_values(dt);
-        model_matrices.push_back(c->mat);
-        colors.push_back(c->color());
-    }
-
-    instanced_colors_vbo.bind();
-    glBufferSubData(
-        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
-    );
-    instanced_colors_vbo.unbind();
-
-    instanced_matrices_vbo.bind();
-    glBufferSubData(
-        GL_ARRAY_BUFFER, 0, model_matrices.size() * sizeof(glm::mat4),
-        model_matrices.data()
-    );
-    instanced_matrices_vbo.unbind();
+    update_vbos();
 }
 
 void CelestialBodySystem::draw() {

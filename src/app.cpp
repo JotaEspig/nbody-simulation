@@ -17,7 +17,6 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
-#include "sphere.hpp"
 
 #define UNUSED(x) (void)(x)
 
@@ -88,9 +87,6 @@ void App::main_loop(const char *json_filename) {
         "./resources/shaders/fragment_shader.glsl"
     );
 
-    auto sphere = std::make_shared<Sphere>();
-    sphere->bind_shader(shader_program);
-
     // Celestial Body system
     bodies_system->setup_using_json(data);
     bodies_system->setup_instanced_vbo();
@@ -109,9 +105,8 @@ void App::main_loop(const char *json_filename) {
 
     // Add system to scene
     current_scene->add_drawable(bodies_system);
-    current_scene->add_drawable(sphere);
 
-    float i = 0;
+    pause = true;
     double before = glfwGetTime();
     while (!should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
@@ -131,11 +126,6 @@ void App::main_loop(const char *json_filename) {
 
         if (!pause) {
             dt *= dt_multiplier;
-
-            sphere->get_shader().set_uniform_float3(
-                "inColor", std::sin(i / 10), std::sin(i / 20), std::sin(i / 30)
-            );
-            ++i;
             current_scene->update(dt);
         }
 
