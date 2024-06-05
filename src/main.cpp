@@ -1,6 +1,32 @@
+#include <fstream>
 #include <iostream>
+#include <regex>
 
 #include "app.hpp"
+
+std::string get_version_from_file(const std::string &filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Unable to open file: " << filename << std::endl;
+        return "";
+    }
+
+    std::string line;
+    std::regex version_pattern(R"(^\s*version\s*=\s*\"([^\"]+)\"\s*$)");
+    std::smatch match;
+
+    while (std::getline(file, line)) {
+        if (std::regex_match(line, match, version_pattern)) {
+            if (match.size() == 2) {
+                file.close();
+                return match[1];
+            }
+        }
+    }
+
+    file.close();
+    return "";
+}
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -10,7 +36,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::cout << "N-Body Simulation" << std::endl;
+    std::string version = get_version_from_file(".cz.toml");
+    std::string title = "N-Body Simulation";
+    if (!version.empty()) {
+        title += " v" + version;
+    }
+
+    std::cout << title << std::endl;
     int choice = 0;
     std::cout << "[0] - Real time simulation" << std::endl
               << "[1] - Bake" << std::endl
@@ -19,7 +51,7 @@ int main(int argc, char **argv) {
     std::cin >> choice;
 
     App app{};
-    app.set_title("NBody Simulation");
+    app.set_title(title);
     app.set_width(600);
     app.set_height(600);
     app.set_color(0x10, 0x10, 0x10);
