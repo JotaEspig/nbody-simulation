@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     std::cin >> choice;
 
     App app{};
-    app.set_title("Uepa");
+    app.set_title("NBody Simulation");
     app.set_width(600);
     app.set_height(600);
     app.set_color(0x10, 0x10, 0x10);
