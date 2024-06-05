@@ -97,7 +97,7 @@ void App::main_loop(const char *json_filename) {
         = glm::normalize(glm::vec3{0.0f, -1.0f, -0.01f});
     current_scene->camera.speed = 100.0f;
     current_scene->camera.sensitivity = 10000.0f;
-    current_scene->camera.max_dist = 1000.0f;
+    current_scene->camera.max_dist = 3000.0f;
 
     // Add system to scene
     current_scene->add_drawable(bodies_system);
@@ -222,7 +222,7 @@ void App::render_loop(const char *json_filename) {
         = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
     current_scene->camera.speed = 80.0f;
     current_scene->camera.sensitivity = 10000.0f;
-    current_scene->camera.max_dist = 1000.0f;
+    current_scene->camera.max_dist = 3000.0f;
 
     current_scene->add_drawable(bodies_system);
 
@@ -266,8 +266,9 @@ void App::render_loop(const char *json_filename) {
                 bodies_system->setup_instanced_vbo();
                 first_setup = false;
             }
-
-            current_scene->update(dt);
+            else {
+                bodies_system->update_vbos();
+            }
         }
         else if (first_iteration) {
             std::cout << "Press P to start" << std::endl;
