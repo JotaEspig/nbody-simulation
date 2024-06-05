@@ -16,6 +16,7 @@ logs/
 .vscode/
 .clangd/
 .cache/
+__pycache__/
 external/include/axolote
 external/lib/axolote
 
