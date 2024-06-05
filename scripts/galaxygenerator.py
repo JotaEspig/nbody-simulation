@@ -113,36 +113,34 @@ def gen_galaxy() -> List[dict]:
 
                 obj = dict()
                 obj["mass"] = orbit_obj_mass
-                obj["pos"] = {"x": pos_offset.x,
-                              "y": pos_offset.y, "z": pos_offset.z}
+                obj["pos"] = pos_offset.to_dict()
 
-                vec = Vec3()
-                vec.x = pos.x - pos_offset.x
-                vec.y = pos.y - pos_offset.y
-                vec.z = pos.z - pos_offset.z
-                distance = (vec.x ** 2 + vec.y ** 2 + vec.z ** 2) ** 0.5
+                obj_vel = Vec3()
+                obj_vel.x = pos.x - pos_offset.x
+                obj_vel.y = pos.y - pos_offset.y
+                obj_vel.z = pos.z - pos_offset.z
+                distance = (obj_vel.x ** 2 + obj_vel.y **
+                            2 + obj_vel.z ** 2) ** 0.5
                 obj_orbital_speed = orbital_speed(
                     central_massive_body_mass, distance)
-                if vec.x == 0:
-                    aux = vec.y
-                    vec.y = vec.z
-                    vec.z = -aux
-                if vec.y == 0:
-                    aux = vec.x
-                    vec.x = vec.z
-                    vec.z = -aux
+                if obj_vel.x == 0:
+                    aux = obj_vel.y
+                    obj_vel.y = obj_vel.z
+                    obj_vel.z = -aux
+                elif obj_vel.y == 0:
+                    aux = obj_vel.x
+                    obj_vel.x = obj_vel.z
+                    obj_vel.z = -aux
                 else:
-                    aux = vec.x
-                    vec.x = vec.y
-                    vec.y = -aux
+                    aux = obj_vel.x
+                    obj_vel.x = obj_vel.y
+                    obj_vel.y = -aux
 
-                vec.x = normalize(vec.x, distance)
-                vec.y = normalize(vec.y, distance)
-                vec.z = normalize(vec.z, distance)
-                new_vec = Vec3(vec.x * obj_orbital_speed + velocity.x, vec.y *
-                               obj_orbital_speed + velocity.y,
-                               vec.z * obj_orbital_speed + velocity.z)
-                obj["velocity"] = new_vec.to_dict()
+                obj_vel.normalize()
+                final_obj_vel = Vec3(obj_vel.x * obj_orbital_speed + velocity.x,
+                                     obj_vel.y * obj_orbital_speed + velocity.y,
+                                     obj_vel.z * obj_orbital_speed + velocity.z)
+                obj["velocity"] = final_obj_vel.to_dict()
 
                 config_dict.append(obj)
 
