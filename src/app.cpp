@@ -102,6 +102,7 @@ void App::main_loop(const char *json_filename) {
     // Add system to scene
     current_scene->add_drawable(bodies_system);
 
+    std::cout << "Press P to start/stop" << std::endl;
     pause = true;
     double before = glfwGetTime();
     while (!should_close()) {
@@ -201,7 +202,6 @@ void App::bake(const char *json_filename) {
 void App::render_loop(const char *json_filename) {
     using json = nlohmann::json;
 
-    pause = true;
     std::string original_title = title();
 
     axolote::gl::Shader instanced_shader_program(
@@ -209,7 +209,6 @@ void App::render_loop(const char *json_filename) {
         "./resources/shaders/fragment_shader.glsl"
     );
 
-    bool first_iteration = true;
     bool first_setup = true;
     bodies_system->bind_shader(instanced_shader_program);
 
@@ -230,6 +229,8 @@ void App::render_loop(const char *json_filename) {
     std::string line;
     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
+        std::cout << "Press P to start/stop" << std::endl;
+        pause = true;
     double before = glfwGetTime();
     while (!file.eof() && !should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
@@ -269,10 +270,6 @@ void App::render_loop(const char *json_filename) {
             else {
                 bodies_system->update_vbos();
             }
-        }
-        else if (first_iteration) {
-            std::cout << "Press P to start" << std::endl;
-            first_iteration = false;
         }
 
         current_scene->update_camera((float)width() / height());
