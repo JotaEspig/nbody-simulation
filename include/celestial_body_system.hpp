@@ -24,7 +24,7 @@ public:
     void setup_instanced_vbo();
     std::shared_ptr<CelestialBody>
     add_body(double mass, glm::vec3 pos, glm::vec3 vel);
-    void normal_algorithm(double dt);
+    void naive_algorithm(double dt);
     void barnes_hut_algorithm(double dt);
     std::vector<std::shared_ptr<CelestialBody>> celestial_bodies() const;
     void update_vbos();

@@ -1,5 +1,4 @@
 #include <cstddef>
-#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -11,6 +10,8 @@
 
 #include "celestial_body_system.hpp"
 #include "octree.hpp"
+
+#define UNUSED(x) (void)(x)
 
 void CelestialBodySystem::setup_using_json(nlohmann::json &data) {
     using json = nlohmann::json;
@@ -120,7 +121,7 @@ void CelestialBodySystem::build_octree() {
     }
 }
 
-void CelestialBodySystem::normal_algorithm(double dt) {
+void CelestialBodySystem::naive_algorithm(double dt) {
     for (auto body0 : _celestial_bodies) {
         for (auto body1 : _celestial_bodies) {
             if (body0 == body1)
@@ -190,7 +191,7 @@ axolote::gl::Shader CelestialBodySystem::get_shader() const {
 }
 
 void CelestialBodySystem::update(double dt) {
-    // normal_algorithm(dt);
+    // naive_algorithm(dt);
     barnes_hut_algorithm(dt);
 
     update_vbos();
@@ -208,4 +209,5 @@ void CelestialBodySystem::draw() {
 }
 
 void CelestialBodySystem::draw(const glm::mat4 &mat) {
+    UNUSED(mat);
 }
