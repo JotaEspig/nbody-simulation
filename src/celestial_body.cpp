@@ -9,6 +9,12 @@
 
 #define UNUSED(x) (void)(x)
 
+#define COLOR_INTERPOLATION(c1, c2, f)                      \
+    glm::vec3 {                                             \
+        c1.x + (c2.x - c1.x) * f, c1.y + (c2.y - c1.y) * f, \
+            c1.z + (c2.z - c1.z) * f                        \
+    }
+
 CelestialBody::CelestialBody(
     double mass, const glm::vec3 &velocity, const glm::vec3 &pos
 ) :
@@ -54,7 +60,7 @@ double CelestialBody::mass() const {
 
 void CelestialBody::set_mass(double mass) {
     _mass = mass;
-    _radius = std::max(0.5, std::log2(_mass));
+    _radius = std::max(0.5, std::log2(_mass) / 2.0f);
 }
 
 float CelestialBody::radius() const {
@@ -71,31 +77,9 @@ void CelestialBody::update_matrix() {
 }
 
 void CelestialBody::update_values() {
-    double max_mass = 200.0;
-    _color = glm::vec3{
-        std::min(_mass / max_mass, 1.0),
-        1.0f - 0.5f * std::min(_mass / max_mass, 1.0),
-        1.0f - std::min(_mass / max_mass, 1.0)
-    };
+    double aux_mass = 200.0;
+    glm::vec3 start_color{0.0f, 0.749f, 1.0f};
+    glm::vec3 end_color{1.0f, 0.4549f, 0.0f};
+    _color = COLOR_INTERPOLATION(start_color, end_color, _mass / aux_mass);
     update_matrix();
 }
-
-/*
-void CelestialBody::draw() {
-    // hardcoded mass base
-    double max_mass = 200.0;
-    glm::vec3 color{
-        std::min(_mass / max_mass, 1.0),
-        1.0f - 0.5f * std::min(_mass / max_mass, 1.0),
-        1.0f - std::min(_mass / max_mass, 1.0)
-    };
-
-    for (auto &m : gmodel->meshes) {
-        m.shader.set_uniform_int("is_color_uniform_set", 1);
-        m.shader.set_uniform_float3("color_uniform", color.x, color.y, color.z);
-    }
-    for (auto &m : gmodel->meshes) {
-        m.shader.set_uniform_int("is_color_uniform_set", 0);
-    }
-};
-*/
