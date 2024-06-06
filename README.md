@@ -28,7 +28,7 @@ After compiling
 ./bin/nbody-simulation <config json file>
 ```
 
-There are some config files already made inside config folder. But you can create your custom config file using:
+There are some config files already made inside `config` directory. But you can create your custom config file using:
 ```bash
 python3 scripts/config_generator.py
 ```
