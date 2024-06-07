@@ -1,3 +1,25 @@
+## v0.2.0 (2024-06-07)
+
+### Feat
+
+- using color interpolation
+- **script**: improved code organization
+- baking and rendering working with new system
+- add more default json configs
+
+### Fix
+
+- **script**: galaxies rotation
+- max distance and bodies update when rendering
+- updated project to use axolote engine v0.4.1
+
+### Refactor
+
+- rename methdos and remove warnings
+- camera initial values changed
+- update_vbos method improved
+- moved color vbo to celestialbodysystem
+
 ## v0.1.0 (2024-05-22)
 
 ### Feat
