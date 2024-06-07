@@ -229,8 +229,8 @@ void App::render_loop(const char *json_filename) {
     std::string line;
     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        std::cout << "Press P to start/stop" << std::endl;
-        pause = true;
+    std::cout << "Press P to start/stop" << std::endl;
+    pause = true;
     double before = glfwGetTime();
     while (!file.eof() && !should_close()) {
         glClearColor(_color.r, _color.g, _color.b, _color.opacity);
