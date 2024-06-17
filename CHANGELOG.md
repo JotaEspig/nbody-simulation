@@ -1,3 +1,9 @@
+## v0.3.1 (2024-06-17)
+
+### Fix
+
+- min camera distance to (0, 0, 0) allowed
+
 ## v0.3.0 (2024-06-17)
 
 ### Feat
