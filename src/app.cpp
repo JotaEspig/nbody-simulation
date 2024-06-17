@@ -77,6 +77,9 @@ void App::process_input(float delta_t) {
         latitude -= current_scene()->camera.speed * delta_t;
     }
 
+    distance = glm::max(distance, 10.0f);
+    latitude = glm::clamp(latitude, -89.0f, 89.0f);
+
     // Update camera position according to latitude, longitude and distance and
     // camera must be looking at (0, 0, 0)
     current_scene()->camera.pos.x
