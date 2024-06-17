@@ -1,3 +1,9 @@
+## v0.3.0 (2024-06-17)
+
+### Feat
+
+- implemented new camera movement
+
 ## v0.2.0 (2024-06-07)
 
 ### Feat
