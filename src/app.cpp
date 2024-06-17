@@ -42,8 +42,6 @@ void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
 }
 
 void App::process_input(float delta_t) {
-    Window::process_input(delta_t);
-
     int pause_key_state = glfwGetKey(window, GLFW_KEY_P);
     if (pause_key_state == GLFW_PRESS && !_keys_pressed[GLFW_KEY_P]) {
         _keys_pressed[GLFW_KEY_P] = true;
@@ -52,6 +50,45 @@ void App::process_input(float delta_t) {
         pause = !pause;
         _keys_pressed[GLFW_KEY_P] = false;
     }
+
+    /** Constant multiplied when distance is modified my camera movement,
+     * that's because it seems slower than latitude and longitude movements **/
+    float distance_modifier = 2.0f;
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        distance -= distance_modifier * current_scene->camera.speed * delta_t;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        longitude += current_scene->camera.speed * delta_t;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        distance += distance_modifier * current_scene->camera.speed * delta_t;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        longitude -= current_scene->camera.speed * delta_t;
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        latitude += current_scene->camera.speed * delta_t;
+        if (latitude > 89.0f)
+            latitude = 89.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        latitude -= current_scene->camera.speed * delta_t;
+        if (latitude < -89.0f)
+            latitude = -89.0f;
+    }
+
+    // Update camera position according to latitude, longitude and distance and
+    // camera must be looking at (0, 0, 0)
+    current_scene->camera.pos.x
+        = distance * cos(glm::radians(latitude)) * cos(glm::radians(longitude));
+    current_scene->camera.pos.y = distance * sin(glm::radians(latitude));
+    current_scene->camera.pos.z
+        = distance * cos(glm::radians(latitude)) * sin(glm::radians(longitude));
+    current_scene->camera.orientation
+        = glm::normalize(-current_scene->camera.pos);
 }
 
 void App::process_input_real_time_mode(float delta_t) {
@@ -92,10 +129,7 @@ void App::main_loop(const char *json_filename) {
     current_scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
     current_scene->camera.fov = 70.0f;
-    current_scene->camera.pos = glm::vec3{0.0f, 400.0f, 0.0f};
-    current_scene->camera.orientation
-        = glm::normalize(glm::vec3{0.0f, -1.0f, -0.01f});
-    current_scene->camera.speed = 100.0f;
+    current_scene->camera.speed = 50.0f;
     current_scene->camera.sensitivity = 10000.0f;
     current_scene->camera.max_dist = 3000.0f;
 
@@ -219,7 +253,7 @@ void App::render_loop(const char *json_filename) {
     current_scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
     current_scene->camera.orientation
         = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
-    current_scene->camera.speed = 80.0f;
+    current_scene->camera.speed = 50.0f;
     current_scene->camera.sensitivity = 10000.0f;
     current_scene->camera.max_dist = 3000.0f;
 

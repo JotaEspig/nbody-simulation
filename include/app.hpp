@@ -15,6 +15,12 @@
  **/
 class App : public axolote::Window {
 public:
+    /** distance to (0, 0, 0) **/
+    float distance = 500.0f;
+    /** Latitude **/
+    float latitude = 0.0f;
+    /** Longitude **/
+    float longitude = 0.0f;
     /** Is simulation paused **/
     bool pause = false;
     /** Celestial bodies **/
