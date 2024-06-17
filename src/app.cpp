@@ -42,68 +42,65 @@ void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
 }
 
 void App::process_input(float delta_t) {
-    int pause_key_state = glfwGetKey(window, GLFW_KEY_P);
-    if (pause_key_state == GLFW_PRESS && !_keys_pressed[GLFW_KEY_P]) {
-        _keys_pressed[GLFW_KEY_P] = true;
+    KeyState pause_key_state = get_key_state(Key::P);
+    if (pause_key_state == KeyState::PRESSED && !is_key_pressed(Key::P)) {
+        set_key_pressed(Key::P, true);
     }
-    else if (pause_key_state == GLFW_RELEASE && _keys_pressed[GLFW_KEY_P]) {
+    else if (pause_key_state == KeyState::RELEASED && is_key_pressed(Key::P)) {
         pause = !pause;
-        _keys_pressed[GLFW_KEY_P] = false;
+        set_key_pressed(Key::P, false);
+    }
+
+    if (get_key_state(Key::ESCAPE) == KeyState::PRESSED) {
+        set_should_close(true);
     }
 
     /** Constant multiplied when distance is modified my camera movement,
      * that's because it seems slower than latitude and longitude movements **/
     float distance_modifier = 2.0f;
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
+    if (get_key_state(Key::W) == KeyState::PRESSED) {
+        distance -= distance_modifier * current_scene()->camera.speed * delta_t;
     }
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        distance -= distance_modifier * current_scene->camera.speed * delta_t;
+    if (get_key_state(Key::A) == KeyState::PRESSED) {
+        longitude += current_scene()->camera.speed * delta_t;
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        longitude += current_scene->camera.speed * delta_t;
+    if (get_key_state(Key::S) == KeyState::PRESSED) {
+        distance += distance_modifier * current_scene()->camera.speed * delta_t;
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        distance += distance_modifier * current_scene->camera.speed * delta_t;
+    if (get_key_state(Key::D) == KeyState::PRESSED) {
+        longitude -= current_scene()->camera.speed * delta_t;
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        longitude -= current_scene->camera.speed * delta_t;
+    if (get_key_state(Key::SPACE) == KeyState::PRESSED) {
+        latitude += current_scene()->camera.speed * delta_t;
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        latitude += current_scene->camera.speed * delta_t;
-        if (latitude > 89.0f)
-            latitude = 89.0f;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        latitude -= current_scene->camera.speed * delta_t;
-        if (latitude < -89.0f)
-            latitude = -89.0f;
+    if (get_key_state(Key::LEFT_SHIFT) == KeyState::PRESSED) {
+        latitude -= current_scene()->camera.speed * delta_t;
     }
 
     // Update camera position according to latitude, longitude and distance and
     // camera must be looking at (0, 0, 0)
-    current_scene->camera.pos.x
+    current_scene()->camera.pos.x
         = distance * cos(glm::radians(latitude)) * cos(glm::radians(longitude));
-    current_scene->camera.pos.y = distance * sin(glm::radians(latitude));
-    current_scene->camera.pos.z
+    current_scene()->camera.pos.y = distance * sin(glm::radians(latitude));
+    current_scene()->camera.pos.z
         = distance * cos(glm::radians(latitude)) * sin(glm::radians(longitude));
-    current_scene->camera.orientation
-        = glm::normalize(-current_scene->camera.pos);
+    current_scene()->camera.orientation
+        = glm::normalize(-current_scene()->camera.pos);
 }
 
 void App::process_input_real_time_mode(float delta_t) {
     UNUSED(delta_t);
-    bool mouse1_key_state = glfwGetKey(window, GLFW_KEY_X);
-    if (mouse1_key_state == GLFW_PRESS && !_keys_pressed[GLFW_KEY_X]) {
-        glm::vec3 pos = current_scene->camera.pos;
-        glm::vec3 vel = (1.0f / 40000) * current_scene->camera.orientation;
+    KeyState x_key_state = get_key_state(Key::X);
+    if (x_key_state == KeyState::PRESSED && !is_key_pressed(Key::X)) {
+        glm::vec3 pos = current_scene()->camera.pos;
+        glm::vec3 vel = (1.0f / 40000) * current_scene()->camera.orientation;
 
         bodies_system->add_body(100, pos, vel);
 
-        _keys_pressed[GLFW_KEY_X] = true;
+        set_key_pressed(Key::X, true);
     }
-    else if (mouse1_key_state == GLFW_RELEASE && _keys_pressed[GLFW_KEY_X]) {
-        _keys_pressed[GLFW_KEY_X] = false;
+    else if (x_key_state == KeyState::RELEASED && is_key_pressed(Key::X)) {
+        set_key_pressed(Key::X, false);
     }
 }
 
@@ -126,26 +123,27 @@ void App::main_loop(const char *json_filename) {
     bodies_system->bind_shader(instanced_shader_program);
 
     // Scene object
-    current_scene = std::make_shared<axolote::Scene>();
+    auto scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
-    current_scene->camera.fov = 70.0f;
-    current_scene->camera.speed = 50.0f;
-    current_scene->camera.sensitivity = 10000.0f;
-    current_scene->camera.max_dist = 3000.0f;
+    scene->camera.fov = 70.0f;
+    scene->camera.speed = 50.0f;
+    scene->camera.sensitivity = 10000.0f;
+    scene->camera.max_dist = 3000.0f;
 
     // Add system to scene
-    current_scene->add_drawable(bodies_system);
+    scene->add_drawable(bodies_system);
+
+    set_scene(scene);
 
     std::cout << "Press P to start/stop" << std::endl;
     pause = true;
-    double before = glfwGetTime();
+    double before = get_time();
     while (!should_close()) {
-        glClearColor(_color.r, _color.g, _color.b, _color.opacity);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        clear();
 
-        glfwPollEvents();
+        poll_events();
 
-        double now = glfwGetTime();
+        double now = get_time();
         double dt = now - before;
         before = now;
         process_input(dt);
@@ -157,13 +155,13 @@ void App::main_loop(const char *json_filename) {
 
         if (!pause) {
             dt *= dt_multiplier;
-            current_scene->update(dt);
+            update(dt);
         }
 
-        current_scene->update_camera((float)width() / height());
-        current_scene->render();
+        update_camera((float)width() / height());
+        render();
 
-        glfwSwapBuffers(window);
+        flush();
     }
 }
 
@@ -174,7 +172,8 @@ void App::bake(const char *json_filename) {
     double dt_multiplier = data["dt_multiplier"];
 
     // Current scene is needed for process input from user
-    current_scene = std::make_shared<axolote::Scene>();
+    auto scene = std::make_shared<axolote::Scene>();
+    set_scene(scene);
 
     // Celestial Body system
     bodies_system->setup_using_json(data);
@@ -188,10 +187,9 @@ void App::bake(const char *json_filename) {
     std::size_t counter = 0;
     outputfile << "[" << std::endl;
     while (!should_close()) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        clear();
 
-        glfwPollEvents();
+        poll_events();
 
         double dt = 1.0 / 60;
         dt *= dt_multiplier;
@@ -225,7 +223,7 @@ void App::bake(const char *json_filename) {
         }
         outputfile << std::endl;
 
-        glfwSwapBuffers(window);
+        flush();
     }
 
     outputfile << "]" << std::endl;
@@ -247,17 +245,18 @@ void App::render_loop(const char *json_filename) {
     bodies_system->bind_shader(instanced_shader_program);
 
     // Scene object
-    current_scene = std::make_shared<axolote::Scene>();
+    auto scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
-    current_scene->camera.fov = 70.0f;
-    current_scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
-    current_scene->camera.orientation
-        = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
-    current_scene->camera.speed = 50.0f;
-    current_scene->camera.sensitivity = 10000.0f;
-    current_scene->camera.max_dist = 3000.0f;
+    scene->camera.fov = 70.0f;
+    scene->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
+    scene->camera.orientation = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
+    scene->camera.speed = 50.0f;
+    scene->camera.sensitivity = 10000.0f;
+    scene->camera.max_dist = 3000.0f;
 
-    current_scene->add_drawable(bodies_system);
+    scene->add_drawable(bodies_system);
+
+    set_scene(scene);
 
     std::ifstream file(json_filename);
     std::string line;
@@ -265,14 +264,13 @@ void App::render_loop(const char *json_filename) {
 
     std::cout << "Press P to start/stop" << std::endl;
     pause = true;
-    double before = glfwGetTime();
+    double before = get_time();
     while (!file.eof() && !should_close()) {
-        glClearColor(_color.r, _color.g, _color.b, _color.opacity);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        clear();
 
-        glfwPollEvents();
+        poll_events();
 
-        double now = glfwGetTime();
+        double now = get_time();
         double dt = now - before;
         before = now;
         process_input(dt);
@@ -306,9 +304,9 @@ void App::render_loop(const char *json_filename) {
             }
         }
 
-        current_scene->update_camera((float)width() / height());
-        current_scene->render();
+        update_camera((float)width() / height());
+        render();
 
-        glfwSwapBuffers(window);
+        flush();
     }
 }

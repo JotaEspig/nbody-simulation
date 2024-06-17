@@ -13,13 +13,20 @@ Sphere::Sphere() {
     }
     _indices = model.meshes[0].indices;
 
+
+    // binds to VAO
     vao.bind();
-    vertices_vbo = axolote::gl::VBO{_vertices};
-    indices_ebo = axolote::gl::EBO(_indices);
+
+    vertices_vbo.buffer_data(
+            sizeof(glm::vec3) * _vertices.size(), _vertices.data()
+            );
+    indices_ebo.buffer_data(sizeof(GLuint) * _indices.size(), _indices.data());
 
     vao.link_attrib(vertices_vbo, 0, 3, GL_FLOAT, 0, (void *)0);
+
     vao.unbind();
     vertices_vbo.unbind();
+    indices_ebo.unbind();
 }
 
 void Sphere::bind_shader(const axolote::gl::Shader &shader_program) {
