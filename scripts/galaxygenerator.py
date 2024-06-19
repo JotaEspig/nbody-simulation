@@ -53,12 +53,14 @@ def gen_galaxy() -> List[dict]:
         obj["velocity"] = velocity.to_dict()
         config_dict.append(obj)
 
-        print(f"galaxy number {i} max orbital objects radius")
+        print(f"galaxy number {i} radius")
         radius = int(input("> "))
         print(f"How many layers of bodies will the galaxy number {i} have?")
         layers_amount = int(input("> "))
-        print(f"How many bodies per layer?")
+        print("How many bodies per layer?")
         bodies_per_layer = int(input("> "))
+        print("Layer density increase rate")
+        density_increase_rate = float(input("> "))
 
         same_mass = False
         aligned_bodies = True
@@ -72,12 +74,18 @@ def gen_galaxy() -> List[dict]:
             aligned_bodies_str = input("> ").strip().lower()
             aligned_bodies = aligned_bodies_str == "y" or aligned_bodies_str == ""
 
-        obj_count = 1
+        mass_randomization = 0
+        if same_mass:
+            print("Mass randomization (Recommended: 1 >= x >= 0)")
+            mass_randomization = float(input("> "))
+
+        density = 1
+        layer_count = 1
         counter = 0
         step = radius / layers_amount
         while counter < radius:
-            offset = step * obj_count
-            for i in range(bodies_per_layer):
+            offset = step * layer_count
+            for i in range(int(bodies_per_layer * density)):
                 pos_offset = Vec3()
                 if not aligned_bodies:
                     pos_offset.x = pos.x + offset * math.sin(random()) * \
@@ -108,9 +116,11 @@ def gen_galaxy() -> List[dict]:
                     print("Object mass")
                     common_mass = float(input("> "))
                 elif not same_mass:
-                    print(f"Object {obj_count} mass")
+                    print(f"Object {layer_count} mass")
                     orbit_obj_mass = float(input("> "))
 
+                orbit_obj_mass += common_mass * \
+                    mass_randomization * math.sin(random())
                 obj = dict()
                 obj["mass"] = orbit_obj_mass
                 obj["pos"] = pos_offset.to_dict()
@@ -145,6 +155,7 @@ def gen_galaxy() -> List[dict]:
                 config_dict.append(obj)
 
             counter += step
-            obj_count += 1
+            layer_count += 1
+            density *= density_increase_rate
 
     return config_dict
