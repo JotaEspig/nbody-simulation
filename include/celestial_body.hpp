@@ -58,14 +58,21 @@ public:
      **/
     bool is_colliding(const CelestialBody &other) const;
     /**
-     * \brief Merges two celestial bodies
+     * \brief Treat the collision between two celestial bodies
      * \author João Vitor Espig (JotaEspig)
      * \param other - other celestial body
      *
-     * the resulting celestial body will have its attributes be a weighted
-     *average according to the mass of each body
+     * If the two celestial bodies are too close, they are merged
+     * Otherwise, the collision is treated as an "elastic" collision
      **/
-    void merge(std::shared_ptr<CelestialBody> other);
+    void collide(std::shared_ptr<CelestialBody> other);
+    /**
+     * \brief Checks if two celestial bodies should merge
+     * \author João Vitor Espig (JotaEspig)
+     * \param other - other celestial body
+     * \returns true if the two celestial bodies should merge
+     **/
+    bool should_merge(std::shared_ptr<CelestialBody> other) const;
     /**
      * \brief mass getter
      * \author João Vitor Espig (JotaEspig)

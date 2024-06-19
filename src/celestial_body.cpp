@@ -45,13 +45,46 @@ bool CelestialBody::is_colliding(const CelestialBody &other) const {
     return (_radius + other._radius) > glm::distance(pos, other.pos);
 }
 
-void CelestialBody::merge(std::shared_ptr<CelestialBody> other) {
-    float new_mass = _mass + other->_mass;
-    pos = ((float)_mass * pos + (float)other->_mass * other->pos) / (new_mass);
-    velocity = ((float)_mass * velocity + (float)other->_mass * other->velocity)
-               / (new_mass);
-    set_mass(new_mass);
-    other->merged = true;
+void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
+    // If the two bodies are way too close to each other, they are merged
+    if (should_merge(other)) {
+        float new_mass = mass() + other->mass();
+        pos = (pos * (float)mass() + other->pos * (float)other->mass())
+              / new_mass;
+        velocity = (velocity * (float)mass()
+                    + other->velocity * (float)other->mass())
+                   / new_mass;
+        set_mass(new_mass);
+        other->merged = true;
+    }
+    else {
+        float m1 = mass();
+        float m2 = other->mass();
+        glm::vec3 dir = glm::normalize(pos - other->pos);
+        glm::vec3 offset
+            = dir * (_radius + other->_radius - glm::distance(pos, other->pos));
+        pos += offset / 3.0f;
+        other->pos -= offset / 3.0f;
+        velocity = velocity
+                   - (2 * m2 / (m1 + m2))
+                         * glm::dot(velocity - other->velocity, dir) * dir;
+        other->velocity = other->velocity
+                          + (2 * m1 / (m1 + m2))
+                                * glm::dot(velocity - other->velocity, dir)
+                                * dir;
+    }
+}
+
+bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
+    // check if the smaller body is totally inside the bigger one, considering a
+    // margin of error and if one of them is  2 times more massive than the
+    // other
+    bool is_2x_massive = std::max(mass(), other->mass())
+                         / std::min(mass(), other->mass())
+                         >= 2.0f;
+    bool is_close_enough = glm::distance(pos, other->pos)
+                           <= (std::max(_radius, other->_radius) + 0.05f);
+    return is_2x_massive && is_close_enough;
 }
 
 double CelestialBody::mass() const {

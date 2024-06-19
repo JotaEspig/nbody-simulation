@@ -36,10 +36,12 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
             return;
         }
         else if (Node::body->is_colliding(*body)) {
-            Node::body->merge(body);
-            center_of_mass = Node::body->pos;
-            total_mass += m2;
-            return;
+            Node::body->collide(body);
+            if (body->merged) {
+                center_of_mass = Node::body->pos;
+                total_mass += m2;
+                return;
+            }
         }
 
         // split must be the first!
