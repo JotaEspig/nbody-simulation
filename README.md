@@ -40,7 +40,7 @@ make docs
 ```
 Then open `docs/html/index.html` with your browser.
 
-## Class Diagram
+## Class Diagram (may be outdated)
 ```mermaid
 classDiagram
     class App {
