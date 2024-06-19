@@ -54,41 +54,13 @@ void App::process_input(float delta_t) {
     if (get_key_state(Key::ESCAPE) == KeyState::PRESSED) {
         set_should_close(true);
     }
-
-    /** Constant multiplied when distance is modified my camera movement,
-     * that's because it seems slower than latitude and longitude movements **/
-    float distance_modifier = 2.0f;
-    if (get_key_state(Key::W) == KeyState::PRESSED) {
-        distance -= distance_modifier * current_scene()->camera.speed * delta_t;
-    }
-    if (get_key_state(Key::A) == KeyState::PRESSED) {
-        longitude += current_scene()->camera.speed * delta_t;
-    }
-    if (get_key_state(Key::S) == KeyState::PRESSED) {
-        distance += distance_modifier * current_scene()->camera.speed * delta_t;
-    }
-    if (get_key_state(Key::D) == KeyState::PRESSED) {
-        longitude -= current_scene()->camera.speed * delta_t;
-    }
-    if (get_key_state(Key::SPACE) == KeyState::PRESSED) {
-        latitude += current_scene()->camera.speed * delta_t;
-    }
-    if (get_key_state(Key::LEFT_SHIFT) == KeyState::PRESSED) {
-        latitude -= current_scene()->camera.speed * delta_t;
+    if (get_key_state(Key::R) == KeyState::PRESSED) {
+        focus_point = glm::vec3{0.0f, 0.0f, 0.0f};
+        distance = 300.0f;
     }
 
-    distance = glm::max(distance, 10.0f);
-    latitude = glm::clamp(latitude, -89.0f, 89.0f);
-
-    // Update camera position according to latitude, longitude and distance and
-    // camera must be looking at (0, 0, 0)
-    current_scene()->camera.pos.x
-        = distance * cos(glm::radians(latitude)) * cos(glm::radians(longitude));
-    current_scene()->camera.pos.y = distance * sin(glm::radians(latitude));
-    current_scene()->camera.pos.z
-        = distance * cos(glm::radians(latitude)) * sin(glm::radians(longitude));
-    current_scene()->camera.orientation
-        = glm::normalize(-current_scene()->camera.pos);
+    update_focus_point(delta_t);
+    update_camera_position(delta_t);
 }
 
 void App::process_input_real_time_mode(float delta_t) {
@@ -312,4 +284,71 @@ void App::render_loop(const char *json_filename) {
 
         flush();
     }
+}
+
+void App::update_focus_point(float delta_t) {
+    // Move focus point using arrow keys and right control and right shift
+    // according to camera orientation
+    float speed = current_scene()->camera.speed / 2.0f;
+    glm::vec3 dir = current_scene()->camera.orientation;
+    if (get_key_state(Key::UP) == KeyState::PRESSED) {
+        focus_point += dir * delta_t * speed;
+    }
+    if (get_key_state(Key::DOWN) == KeyState::PRESSED) {
+        focus_point -= dir * delta_t * speed;
+    }
+    if (get_key_state(Key::LEFT) == KeyState::PRESSED) {
+        focus_point
+            -= glm::normalize(glm::cross(dir, glm::vec3{0.0f, 1.0f, 0.0f}))
+               * delta_t * speed;
+    }
+    if (get_key_state(Key::RIGHT) == KeyState::PRESSED) {
+        focus_point
+            += glm::normalize(glm::cross(dir, glm::vec3{0.0f, 1.0f, 0.0f}))
+               * delta_t * speed;
+    }
+    if (get_key_state(Key::RIGHT_SHIFT) == KeyState::PRESSED) {
+        focus_point += current_scene()->camera.up * delta_t * speed;
+    }
+    if (get_key_state(Key::RIGHT_CONTROL) == KeyState::PRESSED) {
+        focus_point -= current_scene()->camera.up * delta_t * speed;
+    }
+}
+
+void App::update_camera_position(float delta_t) {
+    /** Constant multiplied when distance is modified my camera movement,
+     * that's because it seems slower than latitude and longitude movements **/
+    float distance_modifier = 2.0f;
+    if (get_key_state(Key::W) == KeyState::PRESSED) {
+        distance -= distance_modifier * current_scene()->camera.speed * delta_t;
+    }
+    if (get_key_state(Key::A) == KeyState::PRESSED) {
+        longitude += current_scene()->camera.speed * delta_t;
+    }
+    if (get_key_state(Key::S) == KeyState::PRESSED) {
+        distance += distance_modifier * current_scene()->camera.speed * delta_t;
+    }
+    if (get_key_state(Key::D) == KeyState::PRESSED) {
+        longitude -= current_scene()->camera.speed * delta_t;
+    }
+    if (get_key_state(Key::SPACE) == KeyState::PRESSED) {
+        latitude += current_scene()->camera.speed * delta_t;
+    }
+    if (get_key_state(Key::LEFT_SHIFT) == KeyState::PRESSED) {
+        latitude -= current_scene()->camera.speed * delta_t;
+    }
+
+    distance = glm::max(distance, 10.0f);
+    latitude = glm::clamp(latitude, -89.0f, 89.0f);
+
+    // Update camera position according to latitude, longitude and distance and
+    // camera must be looking at focus point
+    current_scene()->camera.pos.x
+        = distance * cos(glm::radians(latitude)) * cos(glm::radians(longitude));
+    current_scene()->camera.pos.y = distance * sin(glm::radians(latitude));
+    current_scene()->camera.pos.z
+        = distance * cos(glm::radians(latitude)) * sin(glm::radians(longitude));
+    current_scene()->camera.pos += focus_point;
+    current_scene()->camera.orientation
+        = glm::normalize(focus_point - current_scene()->camera.pos);
 }

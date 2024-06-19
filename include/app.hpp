@@ -21,6 +21,8 @@ public:
     float latitude = 0.0f;
     /** Longitude **/
     float longitude = 0.0f;
+    /** Where camera looks **/
+    glm::vec3 focus_point = glm::vec3{0.0f, 0.0f, 0.0f};
     /** Is simulation paused **/
     bool pause = false;
     /** Celestial bodies **/
@@ -57,4 +59,18 @@ public:
      * \param delta_t - delta time
      **/
     void process_input_real_time_mode(float delta_t = 1.0f);
+
+private:
+    /**
+     * \brief update focus point
+     * \author João Vitor Espig (JotaEspig)
+     * \param delta_t - delta time
+     **/
+    void update_focus_point(float delta_t);
+    /**
+     * \brief update camera position
+     * \author João Vitor Espig (JotaEspig)
+     * \param delta_t - delta time
+     **/
+    void update_camera_position(float delta_t);
 };
