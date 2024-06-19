@@ -1,5 +1,5 @@
 {
-    "dt_multiplier": 4000000.0,
+    "dt_multiplier": 1000000.0,
     "bodies": [
         {
             "mass": 200.0,
