@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -58,33 +59,19 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
         other->merged = true;
     }
     else {
-        float m1 = mass();
-        float m2 = other->mass();
         glm::vec3 dir = glm::normalize(pos - other->pos);
         glm::vec3 offset
             = dir * (_radius + other->_radius - glm::distance(pos, other->pos));
-        pos += offset / 3.0f;
-        other->pos -= offset / 3.0f;
-        velocity = velocity
-                   - (2 * m2 / (m1 + m2))
-                         * glm::dot(velocity - other->velocity, dir) * dir;
-        other->velocity = other->velocity
-                          + (2 * m1 / (m1 + m2))
-                                * glm::dot(velocity - other->velocity, dir)
-                                * dir;
+        pos += (offset) / 2.0f;
+        other->pos -= offset / 2.0f;
     }
 }
 
 bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
-    // check if the smaller body is totally inside the bigger one, considering a
-    // margin of error and if one of them is  2 times more massive than the
-    // other
-    bool is_2x_massive = std::max(mass(), other->mass())
-                         / std::min(mass(), other->mass())
-                         >= 2.0f;
-    bool is_close_enough = glm::distance(pos, other->pos)
-                           <= (std::max(_radius, other->_radius) + 0.05f);
-    return is_2x_massive && is_close_enough;
+    // if both mass are more than 50% of the other, they should merge
+    bool should_merge = std::max(mass(), other->mass())
+                        > std::min(mass(), other->mass()) * 1.5;
+    return should_merge;
 }
 
 double CelestialBody::mass() const {
