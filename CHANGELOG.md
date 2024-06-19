@@ -1,3 +1,10 @@
+## v0.3.2 (2024-06-19)
+
+### Refactor
+
+- improved camera movement
+- new collision system
+
 ## v0.3.1 (2024-06-17)
 
 ### Fix
