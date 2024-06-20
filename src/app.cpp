@@ -102,8 +102,8 @@ void App::main_loop(const char *json_filename) {
     // Configs camera (points it downwards)
     scene->camera.fov = 70.0f;
     scene->camera.speed = 50.0f;
-    scene->camera.sensitivity = 10000.0f;
     scene->camera.max_dist = 3000.0f;
+    latitude = 30.0f;
 
     // Add system to scene
     scene->add_drawable(bodies_system);
