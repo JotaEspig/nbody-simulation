@@ -1,6 +1,16 @@
 # nbody-simulation
 N-Body simulation using Axolote Engine
 
+
+
+https://github.com/JotaEspig/nbody-simulation/assets/90321586/a86da899-d6f6-4775-ab41-48be0834ea49
+
+
+
+https://github.com/JotaEspig/nbody-simulation/assets/90321586/46d094b2-8a45-4ccb-9f31-dcf5b419c59c
+
+
+
 ## Dependencies
 * CMake
 * OpenGL
