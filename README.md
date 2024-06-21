@@ -33,6 +33,15 @@ There are some config files already made inside `config` directory. But you can 
 python3 scripts/config_generator.py
 ```
 
+### Keybinds
+
+* `W`, `A`, `S`, `D`, `LEFT_SHIFT`, `SPACE` to move the camera around the focus point (default is (0, 0, 0))
+* `UP`, `DOWN`, `LEFT`, `RIGHT`, `RIGHT_SHIFT`, `RIGHT_CONTROL` to move the focus point
+* `R` to reset the camera position and set the focus point to be (0, 0, 0)
+* `P` to pause the simulation
+* `X` to throw a "semi" massive body where the camera is pointing (WHEN DOING REAL TIME SIMULATION)
+* `ESC` to quit/close the window
+
 ## Documentation
 You can generate the documentation using Doxygen
 ```bash
