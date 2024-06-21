@@ -9,7 +9,15 @@
 #include "constants.hpp"
 
 #define UNUSED(x) (void)(x)
-
+#define BASE_MASS_INTERPOLATION 200.0f
+#define START_COLOR        \
+    glm::vec3 {            \
+        0.0f, 0.749f, 1.0f \
+    }
+#define END_COLOR           \
+    glm::vec3 {             \
+        1.0f, 0.4549f, 0.0f \
+    }
 #define COLOR_INTERPOLATION(c1, c2, f)                      \
     glm::vec3 {                                             \
         c1.x + (c2.x - c1.x) * f, c1.y + (c2.y - c1.y) * f, \
@@ -71,7 +79,9 @@ bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
     // if both mass are more than 50% of the other, they should merge
     bool should_merge = std::max(mass(), other->mass())
                         > std::min(mass(), other->mass()) * 1.5;
-    return should_merge;
+    bool is_close_enough = glm::distance(pos, other->pos)
+                           < std::max(_radius, other->_radius) * 0.001f;
+    return should_merge || is_close_enough;
 }
 
 double CelestialBody::mass() const {
@@ -97,9 +107,8 @@ void CelestialBody::update_matrix() {
 }
 
 void CelestialBody::update_values() {
-    double aux_mass = 200.0;
-    glm::vec3 start_color{0.0f, 0.749f, 1.0f};
-    glm::vec3 end_color{1.0f, 0.4549f, 0.0f};
-    _color = COLOR_INTERPOLATION(start_color, end_color, _mass / aux_mass);
+    _color = COLOR_INTERPOLATION(
+        START_COLOR, END_COLOR, _mass / BASE_MASS_INTERPOLATION
+    );
     update_matrix();
 }
