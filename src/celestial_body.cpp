@@ -77,11 +77,12 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
 
 bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
     // if both mass are more than 50% of the other, they should merge
-    bool should_merge = std::max(mass(), other->mass())
-                        > std::min(mass(), other->mass()) * 1.5;
+    bool is_massive_enough = std::max(mass(), other->mass()) >= 50.0f
+                        || std::max(mass(), other->mass())
+                               > std::min(mass(), other->mass()) * 1.5f;
     bool is_close_enough = glm::distance(pos, other->pos)
                            < std::max(_radius, other->_radius) * 0.001f;
-    return should_merge || is_close_enough;
+    return is_massive_enough || is_close_enough;
 }
 
 double CelestialBody::mass() const {
