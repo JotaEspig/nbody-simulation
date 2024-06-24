@@ -50,6 +50,7 @@ make docs
 Then open `docs/html/index.html` with your browser.
 
 ## Class Diagram (may be outdated)
+[Diagram](docs/diagram.png)
 ```mermaid
 classDiagram
     class App {
