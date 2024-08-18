@@ -87,7 +87,7 @@ void App::main_loop(const char *json_filename) {
 
     std::string original_title = title();
 
-    axolote::gl::Shader instanced_shader_program = axolote::gl::Shader(
+    auto instanced_shader_program = axolote::gl::Shader::create(
         "./resources/shaders/instanced_vertex_shader.glsl",
         "./resources/shaders/fragment_shader.glsl"
     );
@@ -211,7 +211,7 @@ void App::render_loop(const char *json_filename) {
 
     std::string original_title = title();
 
-    axolote::gl::Shader instanced_shader_program(
+    auto instanced_shader_program = axolote::gl::Shader::create(
         "./resources/shaders/instanced_vertex_shader.glsl",
         "./resources/shaders/fragment_shader.glsl"
     );

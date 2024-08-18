@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -59,47 +60,47 @@ void CelestialBodySystem::setup_instanced_vbo() {
         colors.push_back(_celestial_bodies[i]->color());
     }
 
-    axolote::gl::VAO vao = sphere.vao;
-    vao.bind();
+    std::shared_ptr<axolote::gl::VAO> vao = sphere.vao;
+    vao->bind();
 
     // Colors VBO
-    instanced_colors_vbo.bind();
-    instanced_colors_vbo.buffer_data(
+    instanced_colors_vbo->bind();
+    instanced_colors_vbo->buffer_data(
         colors.size() * sizeof(glm::vec3), colors.data(), GL_DYNAMIC_DRAW
     );
-    vao.link_attrib(instanced_colors_vbo, 1, 3, GL_FLOAT, 0, (void *)0);
-    vao.attrib_divisor(instanced_colors_vbo, 1, 1);
-    instanced_colors_vbo.unbind();
+    vao->link_attrib(instanced_colors_vbo, 1, 3, GL_FLOAT, 0, (void *)0);
+    vao->attrib_divisor(instanced_colors_vbo, 1, 1);
+    instanced_colors_vbo->unbind();
 
     // Instanced Matrices VBO
     GLsizeiptr vec4_size = sizeof(glm::vec4);
     GLsizeiptr mat4_size = sizeof(glm::mat4);
 
-    instanced_matrices_vbo.bind();
-    instanced_matrices_vbo.buffer_data(
+    instanced_matrices_vbo->bind();
+    instanced_matrices_vbo->buffer_data(
         model_matrices.size() * sizeof(glm::mat4), model_matrices.data(),
         GL_DYNAMIC_DRAW
     );
-    vao.link_attrib(
+    vao->link_attrib(
         instanced_matrices_vbo, 4, 4, GL_FLOAT, mat4_size, (void *)0
     );
-    vao.link_attrib(
+    vao->link_attrib(
         instanced_matrices_vbo, 5, 4, GL_FLOAT, mat4_size, (void *)(vec4_size)
     );
-    vao.link_attrib(
+    vao->link_attrib(
         instanced_matrices_vbo, 6, 4, GL_FLOAT, mat4_size,
         (void *)(2 * vec4_size)
     );
-    vao.link_attrib(
+    vao->link_attrib(
         instanced_matrices_vbo, 7, 4, GL_FLOAT, mat4_size,
         (void *)(3 * vec4_size)
     );
 
-    vao.attrib_divisor(instanced_matrices_vbo, 4, 1);
-    vao.attrib_divisor(instanced_matrices_vbo, 5, 1);
-    vao.attrib_divisor(instanced_matrices_vbo, 6, 1);
-    vao.attrib_divisor(instanced_matrices_vbo, 7, 1);
-    vao.unbind();
+    vao->attrib_divisor(instanced_matrices_vbo, 4, 1);
+    vao->attrib_divisor(instanced_matrices_vbo, 5, 1);
+    vao->attrib_divisor(instanced_matrices_vbo, 6, 1);
+    vao->attrib_divisor(instanced_matrices_vbo, 7, 1);
+    vao->unbind();
 
     update_vbos();
 }
@@ -164,26 +165,27 @@ void CelestialBodySystem::update_vbos() {
         model_matrices.push_back(c->mat);
         colors.push_back(c->color());
     }
-    instanced_colors_vbo.bind();
+    instanced_colors_vbo->bind();
     glBufferSubData(
         GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
     );
-    instanced_colors_vbo.unbind();
+    instanced_colors_vbo->unbind();
 
-    instanced_matrices_vbo.bind();
+    instanced_matrices_vbo->bind();
     glBufferSubData(
         GL_ARRAY_BUFFER, 0, model_matrices.size() * sizeof(glm::mat4),
         model_matrices.data()
     );
-    instanced_matrices_vbo.unbind();
+    instanced_matrices_vbo->unbind();
 }
 
-void CelestialBodySystem::bind_shader(const axolote::gl::Shader &shader_program
+void CelestialBodySystem::bind_shader(
+    std::shared_ptr<axolote::gl::Shader> shader_program
 ) {
     sphere.bind_shader(shader_program);
 }
 
-axolote::gl::Shader CelestialBodySystem::get_shader() const {
+std::shared_ptr<axolote::gl::Shader> CelestialBodySystem::get_shader() const {
     return sphere.get_shader();
 }
 
@@ -195,13 +197,15 @@ void CelestialBodySystem::update(double dt) {
 }
 
 void CelestialBodySystem::draw() {
-    get_shader().activate();
-    sphere.vao.bind();
+    std::cout << "Drawing " << _celestial_bodies.size()
+              << " celestial bodies\n";
+    get_shader()->activate();
+    sphere.vao->bind();
     glDrawElementsInstanced(
         GL_TRIANGLES, sphere.indices().size(), GL_UNSIGNED_INT, 0,
         _celestial_bodies.size()
     );
-    sphere.vao.unbind();
+    sphere.vao->unbind();
 }
 
 void CelestialBodySystem::draw(const glm::mat4 &mat) {

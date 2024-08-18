@@ -89,13 +89,14 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \param shader_program - shader program
      **/
-    void bind_shader(const axolote::gl::Shader &shader_program) override;
+    void bind_shader(std::shared_ptr<axolote::gl::Shader> shader_program
+    ) override;
     /**
      * \brief Get shader
      * \author João Vitor Espig (JotaEspig)
      * \returns shader
      **/
-    axolote::gl::Shader get_shader() const override;
+    std::shared_ptr<axolote::gl::Shader> get_shader() const override;
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
@@ -118,9 +119,9 @@ public:
 
 private:
     /** Instanced Matrix VBO **/
-    axolote::gl::VBO instanced_matrices_vbo;
+    std::shared_ptr<axolote::gl::VBO> instanced_matrices_vbo = axolote::gl::VBO::create();
     /** Instanced Color VBO **/
-    axolote::gl::VBO instanced_colors_vbo;
+    std::shared_ptr<axolote::gl::VBO> instanced_colors_vbo = axolote::gl::VBO::create();
     /** Vector of celestial bodies on the simulation **/
     std::vector<std::shared_ptr<CelestialBody>> _celestial_bodies;
 

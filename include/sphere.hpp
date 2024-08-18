@@ -5,6 +5,7 @@
  **/
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include <axolote/engine.hpp>
@@ -17,11 +18,11 @@
 class Sphere : public axolote::Drawable {
 public:
     /** VAO **/
-    axolote::gl::VAO vao;
+    std::shared_ptr<axolote::gl::VAO> vao = axolote::gl::VAO::create();
     /** vertices VBO **/
-    axolote::gl::VBO vertices_vbo;
+    std::shared_ptr<axolote::gl::VBO> vertices_vbo = axolote::gl::VBO::create();
     /** indices EBO **/
-    axolote::gl::EBO indices_ebo;
+    std::shared_ptr<axolote::gl::EBO> indices_ebo = axolote::gl::EBO::create();
 
     /**
      * \brief Default constructor
@@ -34,13 +35,14 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \param shader_program Shader to be binded
      **/
-    void bind_shader(const axolote::gl::Shader &shader_program) override;
+    void bind_shader(std::shared_ptr<axolote::gl::Shader> shader_program
+    ) override;
     /**
      * \brief Get the shader
      * \author João Vitor Espig (JotaEspig)
      * \returns Shader binded to the object
      **/
-    axolote::gl::Shader get_shader() const override;
+    std::shared_ptr<axolote::gl::Shader> get_shader() const override;
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
@@ -71,5 +73,5 @@ private:
     /** Indices **/
     std::vector<GLuint> _indices;
     /** Shader **/
-    axolote::gl::Shader shader;
+    std::shared_ptr<axolote::gl::Shader> shader;
 };
