@@ -1,5 +1,4 @@
 #include <cstddef>
-#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -55,9 +54,9 @@ void CelestialBodySystem::setup_instanced_vbo() {
         model_matrices.push_back(_celestial_bodies[i]->mat);
     }
 
-    std::vector<glm::vec3> colors;
+    std::vector<glm::vec4> colors;
     for (std::size_t i = 0; i < amount; ++i) {
-        colors.push_back(_celestial_bodies[i]->color());
+        colors.push_back({_celestial_bodies[i]->color(), 1.0f});
     }
 
     std::shared_ptr<axolote::gl::VAO> vao = sphere.vao;
@@ -66,9 +65,9 @@ void CelestialBodySystem::setup_instanced_vbo() {
     // Colors VBO
     instanced_colors_vbo->bind();
     instanced_colors_vbo->buffer_data(
-        colors.size() * sizeof(glm::vec3), colors.data(), GL_DYNAMIC_DRAW
+        colors.size() * sizeof(glm::vec4), colors.data(), GL_DYNAMIC_DRAW
     );
-    vao->link_attrib(instanced_colors_vbo, 1, 3, GL_FLOAT, 0, (void *)0);
+    vao->link_attrib(instanced_colors_vbo, 1, 4, GL_FLOAT, 0, (void *)0);
     vao->attrib_divisor(instanced_colors_vbo, 1, 1);
     instanced_colors_vbo->unbind();
 
@@ -159,15 +158,15 @@ CelestialBodySystem::celestial_bodies() const {
 
 void CelestialBodySystem::update_vbos() {
     std::vector<glm::mat4> model_matrices;
-    std::vector<glm::vec3> colors;
+    std::vector<glm::vec4> colors;
     for (auto &c : _celestial_bodies) {
         c->update_values();
         model_matrices.push_back(c->mat);
-        colors.push_back(c->color());
+        colors.push_back({c->color(), 1.0f});
     }
     instanced_colors_vbo->bind();
     glBufferSubData(
-        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data()
+        GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec4), colors.data()
     );
     instanced_colors_vbo->unbind();
 
@@ -197,8 +196,6 @@ void CelestialBodySystem::update(double dt) {
 }
 
 void CelestialBodySystem::draw() {
-    std::cout << "Drawing " << _celestial_bodies.size()
-              << " celestial bodies\n";
     get_shader()->activate();
     sphere.vao->bind();
     glDrawElementsInstanced(

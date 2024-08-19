@@ -1,16 +1,16 @@
 #version 460 core
 
 layout(location = 0) in vec3 axolote_aPos;
-layout(location = 1) in vec3 axolote_aColor;
+layout(location = 1) in vec4 axolote_aColor;
 layout(location = 4) in mat4 aInstanceMat;
 
-out vec3 color;
+out vec4 color;
 
-uniform mat4 projection;
-uniform mat4 view;
+uniform mat4 axolote_projection;
+uniform mat4 axolote_view;
 
 mat4 camera() {
-    return projection * view;
+    return axolote_projection * axolote_view;
 }
 
 void main() {
