@@ -1,3 +1,14 @@
+## v0.4.0 (2024-08-19)
+
+### Feat
+
+- **scripts**: added option density increase rate
+
+### Fix
+
+- using axolote 0.7.0
+- collision
+
 ## v0.3.2 (2024-06-19)
 
 ### Refactor
