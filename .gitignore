@@ -20,6 +20,7 @@ build/
 .cache/
 __pycache__/
 external/include/axolote
+external/include/KHR
 external/lib/axolote
 
 # files
