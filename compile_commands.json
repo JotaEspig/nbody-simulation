@@ -1,0 +1,38 @@
+[
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/app.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/app.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/app.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/app.cpp.o"
+},
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/celestial_body.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/celestial_body.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/celestial_body.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/celestial_body.cpp.o"
+},
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/celestial_body_system.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/celestial_body_system.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/celestial_body_system.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/celestial_body_system.cpp.o"
+},
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/main.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/main.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/main.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/octree.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/octree.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/octree.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/octree.cpp.o"
+},
+{
+  "directory": "/home/jotaespig/developing/nbody-simulation/build",
+  "command": "/usr/bin/c++  -I/home/jotaespig/developing/nbody-simulation/include -I/home/jotaespig/developing/nbody-simulation/external/include  -Wall -Wextra -O3 -DNDEBUG -Wall -Wextra -O3 -o CMakeFiles/nbody-simulation.dir/src/sphere.cpp.o -c /home/jotaespig/developing/nbody-simulation/src/sphere.cpp",
+  "file": "/home/jotaespig/developing/nbody-simulation/src/sphere.cpp",
+  "output": "CMakeFiles/nbody-simulation.dir/src/sphere.cpp.o"
+}
+]
