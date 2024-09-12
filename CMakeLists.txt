@@ -26,10 +26,16 @@ find_package(assimp CONFIG REQUIRED)
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 
 add_library(axolote SHARED IMPORTED)
-set_target_properties(axolote PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.dll"
-    IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.lib"
-)
+if (WIN32 OR MSVC)
+    set_target_properties(axolote PROPERTIES 
+        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.dll"
+        IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.lib"
+    )
+else()
+    set_target_properties(axolote PROPERTIES 
+        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/lib/axolote/libaxolote.so"
+    )
+endif()
 add_dependencies(axolote glfw)
 add_dependencies(axolote assimp::assimp)
 

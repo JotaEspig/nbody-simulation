@@ -19,6 +19,7 @@ build/
 .clangd/
 .cache/
 __pycache__/
+axolote-engine/
 external/include/axolote
 external/include/KHR
 external/lib/axolote
@@ -26,3 +27,4 @@ external/lib/axolote
 # files
 auto_gen_*.json
 *.baked
+compile_commands.json
