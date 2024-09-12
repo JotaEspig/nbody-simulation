@@ -68,20 +68,24 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
     }
     else {
         glm::vec3 dir = glm::normalize(pos - other->pos);
-        glm::vec3 offset
-            = dir * (_radius + other->_radius - glm::distance(pos, other->pos));
-        pos += (offset) / 2.0f;
-        other->pos -= offset / 2.0f;
+        float dist = glm::length(pos - other->pos);
+
+        float inv_mass_a = 1 / (mass() + 1);
+        float inv_mass_b = 1 / (other->mass() + 1);
+        float r = (radius() + other->radius()) / 2;
+        glm::vec3 mtd = dir * ((2 * r - dist) * inv_mass_a / (inv_mass_a + inv_mass_b));
+        pos += mtd;
+
+        float impact_speed = glm::dot(velocity - other->velocity, dir);
+        set_mass(mass() + glm::abs(impact_speed) * 0.1);
+        glm::vec3 force = dir * (impact_speed * 0.5f);
+        velocity -= force;
     }
 }
 
 bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
-    // if both mass are more than 50% of the other, they should merge
-    bool is_massive_enough = std::max(mass(), other->mass()) >= 50.0f
-                        || std::max(mass(), other->mass())
-                               > std::min(mass(), other->mass()) * 1.5f;
-    bool is_close_enough = glm::distance(pos, other->pos)
-                           < std::max(_radius, other->_radius) * 0.001f;
+    bool is_massive_enough = std::max(mass(), other->mass()) >= 50.0f;
+    bool is_close_enough = glm::distance(pos, other->pos) < std::max(radius(), other->radius()) * 0.1f;
     return is_massive_enough || is_close_enough;
 }
 
