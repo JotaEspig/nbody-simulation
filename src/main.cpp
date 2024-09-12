@@ -52,8 +52,7 @@ int main(int argc, char **argv) {
 
     App app{};
     app.set_title(title);
-    app.set_width(600);
-    app.set_height(600);
+    app.set_window_size(800, 800);
     app.set_color(0x10, 0x10, 0x10);
     if (choice == 1)
         app.bake(argv[1]);

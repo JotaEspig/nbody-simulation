@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "axolote/glad/glad.h"
 #include "axolote/model.hpp"
 
@@ -32,8 +34,8 @@ void Sphere::bind_shader(std::shared_ptr<axolote::gl::Shader> shader_program) {
     shader = shader_program;
 }
 
-std::shared_ptr<axolote::gl::Shader> Sphere::get_shader() const {
-    return shader;
+std::vector<std::shared_ptr<axolote::gl::Shader>> Sphere::get_shaders() const {
+    return {shader};
 }
 
 void Sphere::update(double dt) {

@@ -184,8 +184,9 @@ void CelestialBodySystem::bind_shader(
     sphere.bind_shader(shader_program);
 }
 
-std::shared_ptr<axolote::gl::Shader> CelestialBodySystem::get_shader() const {
-    return sphere.get_shader();
+std::vector<std::shared_ptr<axolote::gl::Shader>>
+CelestialBodySystem::get_shaders() const {
+    return sphere.get_shaders();
 }
 
 void CelestialBodySystem::update(double dt) {
@@ -196,7 +197,7 @@ void CelestialBodySystem::update(double dt) {
 }
 
 void CelestialBodySystem::draw() {
-    get_shader()->activate();
+    get_shaders()[0]->activate();
     sphere.vao->bind();
     glDrawElementsInstanced(
         GL_TRIANGLES, sphere.indices().size(), GL_UNSIGNED_INT, 0,

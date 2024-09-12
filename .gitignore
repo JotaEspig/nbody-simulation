@@ -22,6 +22,8 @@ __pycache__/
 axolote-engine/
 external/include/axolote
 external/include/KHR
+external/include/KHR
+external/imgui
 external/lib/axolote
 
 # files

@@ -10,6 +10,12 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+option(
+    USE_LOCAL_ASSIMP
+    "Should use local assimp library (located in external folder). Does not work on Windows"
+    OFF
+)
+
 # CMake settings
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,8 +28,15 @@ set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm REQUIRED)
-find_package(assimp CONFIG REQUIRED)
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
+
+set(ASSIMP_LIB assimp)
+set(ASSIMP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/include_assimp)
+if (NOT USE_LOCAL_ASSIMP)
+    find_package(assimp CONFIG REQUIRED)
+    set(ASSIMP_LIB ${ASSIMP_LIB})
+endif ()
+
 
 add_library(axolote SHARED IMPORTED)
 if (WIN32 OR MSVC)
@@ -37,7 +50,7 @@ else()
     )
 endif()
 add_dependencies(axolote glfw)
-add_dependencies(axolote assimp::assimp)
+add_dependencies(axolote ${ASSIMP_LIB})
 
 
 # =-=-=-=-=-=-= DOCS =-=-=-=-=-=-=
@@ -85,7 +98,7 @@ target_link_libraries(
     nbody-simulation
     PRIVATE
     axolote
-    ${OPENGL_LIBRARIES} glfw assimp::assimp
+    ${OPENGL_LIBRARIES} glfw ${ASSIMP_LIB}
 )
 
 # Header files
@@ -94,6 +107,8 @@ target_include_directories(
     PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/external/include
+    ${CMAKE_SOURCE_DIR}/external/imgui/include
+    ${ASSIMP_INCLUDE_DIRS}
 )
 
 if (WIN32 OR MSVC)

@@ -42,7 +42,7 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \returns Shader binded to the object
      **/
-    std::shared_ptr<axolote::gl::Shader> get_shader() const override;
+    std::vector<std::shared_ptr<axolote::gl::Shader>> get_shaders() const override;
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
