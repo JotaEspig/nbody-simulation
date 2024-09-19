@@ -77,7 +77,6 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
         pos += mtd;
 
         float impact_speed = glm::dot(velocity - other->velocity, dir);
-        set_mass(mass() + glm::abs(impact_speed) * 0.1);
         glm::vec3 force = dir * (impact_speed * 0.5f);
         velocity -= force;
     }
