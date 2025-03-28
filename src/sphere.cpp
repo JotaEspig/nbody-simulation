@@ -8,7 +8,7 @@
 #define UNUSED(x) (void)(x)
 
 Sphere::Sphere() {
-    axolote::Model model{"./resources/models/sphere/sphere.obj"};
+    axolote::Model model{"../resources/models/sphere/sphere.obj"};
 
     for (auto &v : model.meshes[0].vertices) {
         _vertices.push_back(v.pos);
@@ -43,7 +43,7 @@ void Sphere::update(double dt) {
 }
 
 void Sphere::draw() {
-    shader->activate();
+    shader->use();
     GLsizeiptr size = _indices.size();
     vao->bind();
     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0);

@@ -197,7 +197,7 @@ void CelestialBodySystem::update(double dt) {
 }
 
 void CelestialBodySystem::draw() {
-    get_shaders()[0]->activate();
+    get_shaders()[0]->use();
     sphere.vao->bind();
     glDrawElementsInstanced(
         GL_TRIANGLES, sphere.indices().size(), GL_UNSIGNED_INT, 0,

@@ -54,11 +54,12 @@ int main(int argc, char **argv) {
     app.set_title(title);
     app.set_window_size(800, 800);
     app.set_color(0x10, 0x10, 0x10);
+    std::string json_path = std::string(argv[1]);
     if (choice == 1)
-        app.bake(argv[1]);
+        app.bake(json_path.c_str());
     else if (choice == 2)
-        app.render_loop(argv[1]);
+        app.render_loop(json_path.c_str());
     else
-        app.main_loop(argv[1]);
+        app.main_loop(json_path.c_str());
     return 0;
 }
