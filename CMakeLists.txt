@@ -81,12 +81,14 @@ set(
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/octree.cpp
     ${SOURCE_DIR}/sphere.cpp
+    ${SOURCE_DIR}/utils.cpp
 )
 
 # Adding executables
 add_executable(nbody-simulation ${SOURCE_FILES})
 add_dependencies(nbody-simulation axolote)
 target_compile_definitions(nbody-simulation PUBLIC GLAD_GLAPI_EXPORT)
+target_compile_definitions(nbody-simulation PUBLIC PROJECT_DIR="${CMAKE_SOURCE_DIR}")
 
 # Libraries
 target_link_directories(

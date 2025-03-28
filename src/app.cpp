@@ -17,6 +17,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
+#include "utils.hpp"
 
 #define UNUSED(x) (void)(x)
 
@@ -90,12 +91,12 @@ void App::main_loop(const char *json_filename) {
     std::string original_title = title();
 
     auto instanced_shader_program = axolote::gl::Shader::create(
-        "../resources/shaders/instanced_vertex_shader.glsl",
-        "../resources/shaders/fragment_shader.glsl"
+        path("resources/shaders/instanced_vertex_shader.glsl"),
+        path("resources/shaders/fragment_shader.glsl")
     );
     auto post_processing_shader = axolote::gl::Shader::create(
-        "../resources/shaders/post_processing_base_vertex_shader.glsl",
-        "../resources/shaders/post_processing_base_fragment_shader.glsl"
+        path("resources/shaders/post_processing_base_vertex_shader.glsl"),
+        path("resources/shaders/post_processing_base_fragment_shader.glsl")
     );
 
     // Celestial Body system
