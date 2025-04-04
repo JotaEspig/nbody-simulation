@@ -46,9 +46,10 @@ public:
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
+     * \param absolute_time - absolute time
      * \param dt Delta time
      **/
-    void update(double dt) override;
+    void update(double absolute_time, double dt) override;
     /**
      * \brief Draw
      * \author João Vitor Espig (JotaEspig)

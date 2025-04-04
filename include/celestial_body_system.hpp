@@ -96,13 +96,15 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \returns shader
      **/
-    std::vector<std::shared_ptr<axolote::gl::Shader>> get_shaders() const override;
+    std::vector<std::shared_ptr<axolote::gl::Shader>>
+    get_shaders() const override;
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
+     * \param absolute_time - absolute time
      * \param dt - delta time
      **/
-    void update(double dt) override;
+    void update(double absolute_time, double dt) override;
     /**
      * \brief Draw
      * \author João Vitor Espig (JotaEspig)

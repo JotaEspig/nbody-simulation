@@ -40,7 +40,8 @@ std::vector<std::shared_ptr<axolote::gl::Shader>> Sphere::get_shaders() const {
     return {shader};
 }
 
-void Sphere::update(double dt) {
+void Sphere::update(double absolute_time, double dt) {
+    UNUSED(absolute_time);
     UNUSED(dt);
 }
 

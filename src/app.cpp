@@ -17,6 +17,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
+#include "gravitational_grid.hpp"
 #include "utils.hpp"
 
 #define UNUSED(x) (void)(x)
@@ -42,13 +43,13 @@ void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
     };
 }
 
-void App::process_input(float delta_t) {
+void App::process_input() {
     KeyState pause_key_state = get_key_state(Key::P);
     if (pause_key_state == KeyState::PRESSED && !is_key_pressed(Key::P)) {
+        current_scene()->pause = !current_scene()->pause;
         set_key_pressed(Key::P, true);
     }
     else if (pause_key_state == KeyState::RELEASED && is_key_pressed(Key::P)) {
-        pause = !pause;
         set_key_pressed(Key::P, false);
     }
 
@@ -60,17 +61,16 @@ void App::process_input(float delta_t) {
         distance = 300.0f;
     }
 
-    update_focus_point(delta_t);
-    update_camera_position(delta_t);
+    update_focus_point();
+    update_camera_position();
 }
 
-void App::process_input_real_time_mode(float delta_t) {
-    UNUSED(delta_t);
+void App::process_input_real_time_mode() {
     KeyState x_key_state = get_key_state(Key::X);
     if (x_key_state == KeyState::PRESSED && !is_key_pressed(Key::X)) {
-        glm::vec3 pos = current_scene()->context->camera.pos;
-        glm::vec3 vel
-            = (1.0f / 40000) * current_scene()->context->camera.orientation;
+        glm::vec3 pos = current_scene()->context->camera.get_pos();
+        glm::vec3 vel = (1.0f / 40000)
+                        * current_scene()->context->camera.get_orientation();
 
         bodies_system->add_body(100, pos, vel);
 
@@ -98,6 +98,14 @@ void App::main_loop(const char *json_filename) {
         path("resources/shaders/post_processing_base_vertex_shader.glsl"),
         path("resources/shaders/post_processing_base_fragment_shader.glsl")
     );
+    auto gmesh_shader = axolote::gl::Shader::create(
+        path("resources/shaders/gravgrid_vertex_shader.glsl"),
+        path("resources/shaders/gmesh_base_fragment_shader.glsl")
+    );
+
+    auto grav_grid
+        = std::make_shared<GravGrid>(bodies_system->octree.initial_width, 100);
+    grav_grid->bind_shader(gmesh_shader);
 
     // Celestial Body system
     bodies_system->setup_using_json(data);
@@ -115,38 +123,29 @@ void App::main_loop(const char *json_filename) {
     latitude = 30.0f;
 
     // Add system to scene
-    scene->add_drawable(bodies_system);
+    // scene->add_drawable(bodies_system);
+    scene->add_drawable(grav_grid);
 
     set_scene(scene);
 
     std::cout << "Press P to start/stop" << std::endl;
     pause = true;
-    double before = get_time();
     while (!should_close()) {
-        clear();
+        init_frame();
 
-        poll_events();
-
-        double now = get_time();
-        double dt = now - before;
-        before = now;
-        process_input(dt);
-        process_input_real_time_mode(dt);
+        process_input();
+        process_input_real_time_mode();
 
         std::stringstream sstr;
-        sstr << original_title << " | " << (int)(1 / dt) << " fps";
+        sstr << original_title << " | " << (int)(1 / _delta_time) << " fps";
         set_title(sstr.str());
 
         update_camera((float)width() / height());
-        if (!pause) {
-            dt *= dt_multiplier;
-            update(dt);
-        }
-
-        clear();
+        _delta_time *= dt_multiplier;
+        update();
         render();
 
-        flush();
+        finish_frame();
     }
 }
 
@@ -179,9 +178,9 @@ void App::bake(const char *json_filename) {
         double dt = 1.0 / 60;
         dt *= dt_multiplier;
 
-        process_input(dt);
+        process_input();
 
-        bodies_system->update(dt);
+        bodies_system->update(_absolute_time, dt);
 
         int i = 0;
         int size = bodies_system->celestial_bodies().size();
@@ -208,7 +207,7 @@ void App::bake(const char *json_filename) {
         }
         outputfile << std::endl;
 
-        flush();
+        finish_frame();
     }
 
     outputfile << "]" << std::endl;
@@ -233,9 +232,10 @@ void App::render_loop(const char *json_filename) {
     auto scene = std::make_shared<axolote::Scene>();
     // Configs camera (points it downwards)
     scene->context->camera.fov = 70.0f;
-    scene->context->camera.pos = glm::vec3{0.0f, 300.0f, 0.0f};
-    scene->context->camera.orientation
-        = glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f});
+    scene->context->camera.set_pos(glm::vec3{0.0f, 300.0f, 0.0f});
+    scene->context->camera.set_orientation(
+        glm::normalize(glm::vec3{0.01f, -1.0f, 0.0f})
+    );
     scene->context->camera.speed = 50.0f;
     scene->context->camera.sensitivity = 10000.0f;
     scene->context->camera.max_dist = 3000.0f;
@@ -250,17 +250,14 @@ void App::render_loop(const char *json_filename) {
 
     std::cout << "Press P to start/stop" << std::endl;
     pause = true;
-    double before = get_time();
     while (!file.eof() && !should_close()) {
         poll_events();
+        tick();
 
-        double now = get_time();
-        double dt = now - before;
-        before = now;
-        process_input(dt);
+        process_input();
 
         std::stringstream sstr;
-        sstr << original_title << " | " << (int)(1 / dt) << " fps";
+        sstr << original_title << " | " << (int)(1 / _delta_time) << " fps";
         set_title(sstr.str());
 
         if (!pause) {
@@ -291,80 +288,64 @@ void App::render_loop(const char *json_filename) {
         update_camera((float)width() / height());
         render();
 
-        flush();
+        finish_frame();
     }
 }
 
-void App::update_focus_point(float delta_t) {
+void App::update_focus_point() {
     // Move focus point using arrow keys and right control and right shift
     // according to camera orientation
     float speed = current_scene()->context->camera.speed / 2.0f;
-    glm::vec3 dir = current_scene()->context->camera.orientation;
+    glm::vec3 dir = current_scene()->context->camera.get_orientation();
     if (get_key_state(Key::UP) == KeyState::PRESSED) {
-        focus_point += dir * delta_t * speed;
+        focus_point += dir * (float)_delta_time * speed;
     }
     if (get_key_state(Key::DOWN) == KeyState::PRESSED) {
-        focus_point -= dir * delta_t * speed;
+        focus_point -= dir * (float)_delta_time * speed;
     }
     if (get_key_state(Key::LEFT) == KeyState::PRESSED) {
         focus_point
             -= glm::normalize(glm::cross(dir, glm::vec3{0.0f, 1.0f, 0.0f}))
-               * delta_t * speed;
+               * (float)_delta_time * speed;
     }
     if (get_key_state(Key::RIGHT) == KeyState::PRESSED) {
         focus_point
             += glm::normalize(glm::cross(dir, glm::vec3{0.0f, 1.0f, 0.0f}))
-               * delta_t * speed;
+               * (float)_delta_time * speed;
     }
     if (get_key_state(Key::RIGHT_SHIFT) == KeyState::PRESSED) {
-        focus_point += current_scene()->context->camera.up * delta_t * speed;
+        focus_point += current_scene()->context->camera.get_up()
+                       * (float)_delta_time * speed;
     }
     if (get_key_state(Key::RIGHT_CONTROL) == KeyState::PRESSED) {
-        focus_point -= current_scene()->context->camera.up * delta_t * speed;
+        focus_point -= current_scene()->context->camera.get_up()
+                       * (float)_delta_time * speed;
     }
 }
 
-void App::update_camera_position(float delta_t) {
+void App::update_camera_position() {
     /** Constant multiplied when distance is modified my camera movement,
      * that's because it seems slower than latitude and longitude movements **/
     float distance_modifier = 2.0f;
     if (get_key_state(Key::W) == KeyState::PRESSED) {
         distance -= distance_modifier * current_scene()->context->camera.speed
-                    * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+                    * _delta_time;
     }
     if (get_key_state(Key::A) == KeyState::PRESSED) {
-        longitude += current_scene()->context->camera.speed * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+        longitude += current_scene()->context->camera.speed * _delta_time;
     }
     if (get_key_state(Key::S) == KeyState::PRESSED) {
         distance += distance_modifier * current_scene()->context->camera.speed
-                    * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+                    * _delta_time;
     }
     if (get_key_state(Key::D) == KeyState::PRESSED) {
-        longitude -= current_scene()->context->camera.speed * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+        longitude -= current_scene()->context->camera.speed * _delta_time;
     }
     if (get_key_state(Key::SPACE) == KeyState::PRESSED) {
-        latitude += current_scene()->context->camera.speed * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+        latitude += current_scene()->context->camera.speed * _delta_time;
     }
     if (get_key_state(Key::LEFT_SHIFT) == KeyState::PRESSED) {
-        latitude -= current_scene()->context->camera.speed * delta_t;
-
-        current_scene()->context->camera.has_moved = true;
-        current_scene()->context->camera.should_calculate_matrix = true;
+        latitude -= current_scene()->context->camera.speed * _delta_time;
     }
 
     distance = glm::max(distance, 10.0f);
@@ -372,13 +353,15 @@ void App::update_camera_position(float delta_t) {
 
     // Update camera position according to latitude, longitude and distance and
     // camera must be looking at focus point
-    current_scene()->context->camera.pos.x
+    glm::vec3 pos;
+    pos.x
         = distance * cos(glm::radians(latitude)) * cos(glm::radians(longitude));
-    current_scene()->context->camera.pos.y
-        = distance * sin(glm::radians(latitude));
-    current_scene()->context->camera.pos.z
+    pos.y = distance * sin(glm::radians(latitude));
+    pos.z
         = distance * cos(glm::radians(latitude)) * sin(glm::radians(longitude));
-    current_scene()->context->camera.pos += focus_point;
-    current_scene()->context->camera.orientation
-        = glm::normalize(focus_point - current_scene()->context->camera.pos);
+    pos += focus_point;
+    current_scene()->context->camera.set_pos(pos);
+    current_scene()->context->camera.set_orientation(
+        glm::normalize(focus_point - current_scene()->context->camera.get_pos())
+    );
 }

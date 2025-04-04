@@ -189,7 +189,9 @@ CelestialBodySystem::get_shaders() const {
     return sphere.get_shaders();
 }
 
-void CelestialBodySystem::update(double dt) {
+void CelestialBodySystem::update(double absolute_time, double dt) {
+    UNUSED(absolute_time);
+
     // naive_algorithm(dt);
     barnes_hut_algorithm(dt);
 

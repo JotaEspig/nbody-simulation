@@ -78,6 +78,7 @@ set(
     ${SOURCE_DIR}/app.cpp
     ${SOURCE_DIR}/celestial_body.cpp
     ${SOURCE_DIR}/celestial_body_system.cpp
+    ${SOURCE_DIR}/gravitational_grid.cpp
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/octree.cpp
     ${SOURCE_DIR}/sphere.cpp

@@ -52,25 +52,23 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \param delta_t - delta time
      **/
-    void process_input(float delta_t = 1.0f);
+    void process_input();
     /**
      * \brief process especial input used when rendering without baked data
      * \author João Vitor Espig (JotaEspig)
      * \param delta_t - delta time
      **/
-    void process_input_real_time_mode(float delta_t = 1.0f);
+    void process_input_real_time_mode();
 
 private:
     /**
      * \brief update focus point
      * \author João Vitor Espig (JotaEspig)
-     * \param delta_t - delta time
      **/
-    void update_focus_point(float delta_t);
+    void update_focus_point();
     /**
      * \brief update camera position
      * \author João Vitor Espig (JotaEspig)
-     * \param delta_t - delta time
      **/
-    void update_camera_position(float delta_t);
+    void update_camera_position();
 };
