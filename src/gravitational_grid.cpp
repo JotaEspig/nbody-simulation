@@ -75,23 +75,18 @@ void GravGrid::update(double absolute_time, double dt) {
             dist = std::max(dist, 0.8f);
             double rs = (2 * G * c->mass()) / (dist * dist);
             // Multiply by 10000 to increase the visual effect of gravity
-            double w = 2 * std::sqrt(rs * (dist - rs)) * 1000000;
+            double w = 2 * std::sqrt(rs * (dist - rs)) * 50000;
 
             displacement += w;
         }
 
-        displacement /= 20.0f; // Offset to make the grid to not be so below y=0
         displacements.push_back(displacement);
     }
 }
 
 void GravGrid::draw() {
     bool cull_face = glIsEnabled(GL_CULL_FACE);
-    GLint polygon_mode[2];
-    glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
-
     glDisable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     gmodel->meshes[0].default_draw_binds(_model_matrix);
     gmodel->meshes[0].vao()->bind();
@@ -111,5 +106,4 @@ void GravGrid::draw() {
     if (cull_face) {
         glEnable(GL_CULL_FACE);
     }
-    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode[0]);
 }
