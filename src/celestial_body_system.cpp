@@ -192,7 +192,7 @@ CelestialBodySystem::get_shaders() const {
 void CelestialBodySystem::update(double absolute_time, double dt) {
     UNUSED(absolute_time);
 
-    // naive_algorithm(dt);
+    //naive_algorithm(dt);
     barnes_hut_algorithm(dt);
 
     update_vbos();

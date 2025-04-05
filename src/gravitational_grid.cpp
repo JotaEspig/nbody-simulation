@@ -62,6 +62,7 @@ void GravGrid::update(double absolute_time, double dt) {
     displacements.clear();
     displacements.reserve(_indices.size());
 
+    // O(n²)
     for (std::size_t i = 0; i < displacements.capacity(); ++i) {
         glm::vec3 vertex_pos = gmodel->meshes[0].vertices[i].pos;
         double displacement = 0.0f;
@@ -72,10 +73,10 @@ void GravGrid::update(double absolute_time, double dt) {
             float dist = glm::distance(vertex_pos, pos) / 10.0f;
 
             // Do not allow division by zero or rs tending to infinity
-            dist = std::max(dist, 0.8f);
+            dist = std::max(dist, 0.1f);
             double rs = (2 * G * c->mass()) / (dist * dist);
             // Multiply by 10000 to increase the visual effect of gravity
-            double w = 2 * std::sqrt(rs * (dist - rs)) * 50000;
+            double w = 2 * std::sqrt(rs * (dist - rs)) * 25000;
 
             displacement += w;
         }

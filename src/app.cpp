@@ -14,6 +14,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <nlohmann/json.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include "app.hpp"
@@ -44,6 +45,16 @@ void to_json(nlohmann::json &j, const BodyDataJSON &body_data) {
 }
 
 void App::process_input() {
+    KeyState l_key_state = get_key_state(Key::L);
+    if (l_key_state == KeyState::PRESSED && !is_key_pressed(Key::L)) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        set_key_pressed(Key::L, true);
+    }
+    else if (l_key_state == KeyState::RELEASED && is_key_pressed(Key::L)) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        set_key_pressed(Key::L, false);
+    }
+
     KeyState pause_key_state = get_key_state(Key::P);
     if (pause_key_state == KeyState::PRESSED && !is_key_pressed(Key::P)) {
         current_scene()->pause = !current_scene()->pause;
@@ -119,7 +130,32 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
     latitude = 30.0f;
 
     if (use_grav_grid) {
-        auto grav_grid = std::make_shared<GravGrid>(bodies_system, 150, 6);
+        auto bodies = bodies_system->celestial_bodies();
+        std::sort(
+            bodies.begin(), bodies.end(),
+            [](const std::shared_ptr<CelestialBody> &a,
+               const std::shared_ptr<CelestialBody> &b) {
+                if (a->pos.x > b->pos.x) {
+                    return true;
+                }
+                else if (a->pos.x < b->pos.x) {
+                    return false;
+                }
+                else if (a->pos.z > b->pos.z) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        );
+        glm::vec3 biggest = bodies[0]->pos;
+        int amount = (int)glm::length(biggest) + 30;
+        std::cout << amount << std::endl;
+        std::cout << amount / 30 << std::endl;
+        auto grav_grid = std::make_shared<GravGrid>(
+            bodies_system, amount, amount / 30
+        );
         grav_grid->bind_shader(gmesh_shader);
         scene->add_drawable(grav_grid);
     }
