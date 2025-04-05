@@ -81,7 +81,7 @@ void App::process_input_real_time_mode() {
     }
 }
 
-void App::main_loop(const char *json_filename) {
+void App::main_loop(const char *json_filename, bool use_grav_grid) {
     set_color(0.0f, 0.0f, 0.0f, 1.0f);
     using json = nlohmann::json;
     std::ifstream file(json_filename);
@@ -118,11 +118,13 @@ void App::main_loop(const char *json_filename) {
     scene->context->camera.max_dist = 3000.0f;
     latitude = 30.0f;
 
-    auto grav_grid = std::make_shared<GravGrid>(bodies_system, 150, 6);
-    grav_grid->bind_shader(gmesh_shader);
+    if (use_grav_grid) {
+        auto grav_grid = std::make_shared<GravGrid>(bodies_system, 150, 6);
+        grav_grid->bind_shader(gmesh_shader);
+        scene->add_drawable(grav_grid);
+    }
 
     scene->add_drawable(bodies_system);
-    scene->add_drawable(grav_grid);
 
     set_scene(scene);
 

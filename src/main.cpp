@@ -44,11 +44,40 @@ int main(int argc, char **argv) {
 
     std::cout << title << std::endl;
     int choice = 0;
-    std::cout << "[0] - Real time simulation" << std::endl
-              << "[1] - Bake" << std::endl
-              << "[2] - Render baked file" << std::endl
-              << "> ";
-    std::cin >> choice;
+    bool use_grav_grid = false;
+    for (int i = 2; i < argc; ++i) {
+        if (std::string(argv[i]) == "--simulate") {
+            choice = 0;
+        }
+        else if (std::string(argv[i]) == "--bake") {
+            choice = 1;
+        }
+        else if (std::string(argv[i]) == "--render") {
+            choice = 2;
+        }
+        else if (std::string(argv[i]) == "--grav-grid") {
+            use_grav_grid = true;
+        }
+        else if (std::string(argv[i]) == "--version") {
+            std::cout << title << std::endl;
+            return 0;
+        }
+        else {
+            std::cout
+                << "Usage: ./bin/nbody-simulation <config json file> [options]"
+                << std::endl
+                << "Options:" << std::endl
+                << "  --version     Show version" << std::endl
+                << "  --simulate    Simulate the system (Default)" << std::endl
+                << "  --bake        Bake the simulation" << std::endl
+                << "  --render      Render the simulation" << std::endl
+                << "  --grav-grid   Use gravitational grid (Only works on "
+                   "--simulate)"
+                << std::endl
+                << "  --help       Show this help message" << std::endl;
+            return 0;
+        }
+    }
 
     App app{};
     app.set_title(title);
@@ -60,6 +89,6 @@ int main(int argc, char **argv) {
     else if (choice == 2)
         app.render_loop(json_path.c_str());
     else
-        app.main_loop(json_path.c_str());
+        app.main_loop(json_path.c_str(), use_grav_grid);
     return 0;
 }

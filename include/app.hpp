@@ -33,8 +33,9 @@ public:
      * \brief renders simulation in real time mode
      * \author João Vitor Espig (JotaEspig)
      * \param json_filename - json filename
+     * \param use_grav_grid - use gravitational grid
      **/
-    void main_loop(const char *json_filename = "");
+    void main_loop(const char *json_filename, bool use_grav_grid = false);
     /**
      * \brief bake simulation
      * \author João Vitor Espig (JotaEspig)
