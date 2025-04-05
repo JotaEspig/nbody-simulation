@@ -119,6 +119,8 @@ public:
      **/
     void draw(const glm::mat4 &mat) override;
 
+    friend class GravGrid;
+
 private:
     /** Instanced Matrix VBO **/
     std::shared_ptr<axolote::gl::VBO> instanced_matrices_vbo

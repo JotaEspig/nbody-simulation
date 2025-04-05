@@ -8,18 +8,22 @@
 
 #include "gravitational_grid.hpp"
 
-GravGrid::GravGrid(int size, float width) {
-    using namespace axolote;
+#define G 6.67430e-11f
 
-    std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
+GravGrid::GravGrid(
+    std::shared_ptr<CelestialBodySystem> system, int size, float width
+) {
+    _system = system;
+
+    std::vector<axolote::Vertex> vertices;
+    _indices.clear();
 
     // build a 2d mesh of quads
     for (int i = -size / 2; i < size / 2; i += width) {
         for (int j = -size / 2; j < size / 2; j += width) {
-            vertices.push_back(
-                Vertex{{(float)i, 0.0f, (float)j}, {1.0f, 1.0f, 1.0f, 1.0f}}
-            );
+            vertices.push_back(axolote::Vertex{
+                {(float)i, 0.0f, (float)j}, {1.0f, 1.0f, 1.0f, 1.0f}
+            });
         }
     }
 
@@ -33,27 +37,52 @@ GravGrid::GravGrid(int size, float width) {
             GLuint bottomRight = (i + 1) * amount_per_axis + (j + 1);
 
             // top edge
-            indices.push_back(topLeft);
-            indices.push_back(topRight);
+            _indices.push_back(topLeft);
+            _indices.push_back(topRight);
 
             // right edge
-            indices.push_back(topRight);
-            indices.push_back(bottomRight);
+            _indices.push_back(topRight);
+            _indices.push_back(bottomRight);
 
             // bottom edge
-            indices.push_back(bottomRight);
-            indices.push_back(bottomLeft);
+            _indices.push_back(bottomRight);
+            _indices.push_back(bottomLeft);
 
             // left edge
-            indices.push_back(bottomLeft);
-            indices.push_back(topLeft);
+            _indices.push_back(bottomLeft);
+            _indices.push_back(topLeft);
         }
     }
 
-    _indices_size = indices.size();
-
-    gmodel->meshes.push_back({vertices, indices, {}});
+    gmodel->meshes.push_back({vertices, _indices, {}});
     set_matrix(glm::mat4{1.0f});
+}
+
+void GravGrid::update(double absolute_time, double dt) {
+    displacements.clear();
+    displacements.reserve(_indices.size());
+
+    for (std::size_t i = 0; i < displacements.capacity(); ++i) {
+        glm::vec3 vertex_pos = gmodel->meshes[0].vertices[i].pos;
+        double displacement = 0.0f;
+
+        for (auto &c : _system->celestial_bodies()) {
+            glm::vec3 pos = c->pos;
+            // dividing by X increases the area of "perception" of gravity
+            float dist = glm::distance(vertex_pos, pos) / 10.0f;
+
+            // Do not allow division by zero or rs tending to infinity
+            dist = std::max(dist, 0.8f);
+            double rs = (2 * G * c->mass()) / (dist * dist);
+            // Multiply by 10000 to increase the visual effect of gravity
+            double w = 2 * std::sqrt(rs * (dist - rs)) * 1000000;
+
+            displacement += w;
+        }
+
+        displacement /= 15.0f; // Offset to make the grid to not be so below y=0
+        displacements.push_back(displacement);
+    }
 }
 
 void GravGrid::draw() {
@@ -65,7 +94,18 @@ void GravGrid::draw() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     gmodel->meshes[0].default_draw_binds(_model_matrix);
-    glDrawElements(GL_LINES, _indices_size, GL_UNSIGNED_INT, 0);
+    gmodel->meshes[0].vao()->bind();
+
+    get_shaders()[0]->set_uniform_float(
+        "displacements_count", displacements.size()
+    );
+    for (std::size_t i = 0; i < displacements.size(); ++i) {
+        std::string name = "displacements[" + std::to_string(i) + "]";
+        get_shaders()[0]->set_uniform_float(name.c_str(), displacements[i]);
+    }
+    glDrawElements(GL_LINES, _indices.size(), GL_UNSIGNED_INT, 0);
+
+    gmodel->meshes[0].vao()->unbind();
     gmodel->meshes[0].default_draw_unbinds();
 
     if (cull_face) {

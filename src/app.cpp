@@ -103,10 +103,6 @@ void App::main_loop(const char *json_filename) {
         path("resources/shaders/gmesh_base_fragment_shader.glsl")
     );
 
-    auto grav_grid
-        = std::make_shared<GravGrid>(bodies_system->octree.initial_width, 100);
-    grav_grid->bind_shader(gmesh_shader);
-
     // Celestial Body system
     bodies_system->setup_using_json(data);
     bodies_system->setup_instanced_vbo();
@@ -122,8 +118,10 @@ void App::main_loop(const char *json_filename) {
     scene->context->camera.max_dist = 3000.0f;
     latitude = 30.0f;
 
-    // Add system to scene
-    // scene->add_drawable(bodies_system);
+    auto grav_grid = std::make_shared<GravGrid>(bodies_system, 150, 6);
+    grav_grid->bind_shader(gmesh_shader);
+
+    scene->add_drawable(bodies_system);
     scene->add_drawable(grav_grid);
 
     set_scene(scene);

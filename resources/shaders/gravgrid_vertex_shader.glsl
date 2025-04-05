@@ -14,9 +14,12 @@ uniform mat4 axolote_model;
 // GMesh class, you have to set them manually
 uniform mat4 axolote_camera;
 
+uniform float[10000] displacements;
+uniform float displacements_count;
+
 void main() {
     mat4 translation = mat4(1.0);
-    translation[3] = vec4(0, abs(gl_VertexID - 200), 0, 1);
+    translation[3] = vec4(0, -displacements[gl_VertexID], 0, 1);
 
     mat4 model = axolote_model * translation;
     axolote_current_pos = vec3(model * vec4(axolote_aPos, 1.0f));
