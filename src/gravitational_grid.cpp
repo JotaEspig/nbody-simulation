@@ -80,7 +80,7 @@ void GravGrid::update(double absolute_time, double dt) {
             displacement += w;
         }
 
-        displacement /= 15.0f; // Offset to make the grid to not be so below y=0
+        displacement /= 20.0f; // Offset to make the grid to not be so below y=0
         displacements.push_back(displacement);
     }
 }
