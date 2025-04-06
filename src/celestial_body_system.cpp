@@ -133,6 +133,12 @@ void CelestialBodySystem::naive_algorithm(double dt) {
 
 void CelestialBodySystem::barnes_hut_algorithm(double dt) {
     build_octree();
+    if (grav_grid) {
+        // all displacement values to 0
+        for (std::size_t i = 0; i < grav_grid->_displacements.capacity(); ++i) {
+            grav_grid->_displacements[i] = 0.0;
+        }
+    }
 
     std::vector<std::shared_ptr<CelestialBody>> active_bodies;
     for (auto &c : _celestial_bodies) {
@@ -145,6 +151,10 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt) {
             glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
             c->velocity += acc * (float)dt;
             c->pos += c->velocity * (float)dt;
+
+            if (grav_grid) {
+                grav_grid->update_for_body(c);
+            }
         }
     }
 
@@ -192,7 +202,7 @@ CelestialBodySystem::get_shaders() const {
 void CelestialBodySystem::update(double absolute_time, double dt) {
     UNUSED(absolute_time);
 
-    //naive_algorithm(dt);
+    // naive_algorithm(dt);
     barnes_hut_algorithm(dt);
 
     update_vbos();

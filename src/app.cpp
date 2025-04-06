@@ -153,11 +153,11 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
         int amount = (int)glm::length(biggest) + 30;
         std::cout << amount << std::endl;
         std::cout << amount / 30 << std::endl;
-        auto grav_grid = std::make_shared<GravGrid>(
-            bodies_system, amount, amount / 30
-        );
+        auto grav_grid = std::make_shared<GravGrid>(amount, amount / 30);
         grav_grid->bind_shader(gmesh_shader);
         scene->add_drawable(grav_grid);
+
+        bodies_system->grav_grid = grav_grid;
     }
 
     scene->add_drawable(bodies_system);

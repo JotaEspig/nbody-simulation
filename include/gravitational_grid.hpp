@@ -2,19 +2,18 @@
 
 #include "axolote/object3d.hpp"
 
-#include "celestial_body_system.hpp"
+#include "celestial_body.hpp"
 
 class GravGrid : public axolote::Object3D {
 public:
-    GravGrid(
-        std::shared_ptr<CelestialBodySystem> system, int size, float width = 10
-    );
+    GravGrid(int size, float width = 10);
 
-    void update(double absolute_time, double dt) override;
+    void update_for_body(std::shared_ptr<CelestialBody> c);
     void draw() override;
 
+    friend class CelestialBodySystem;
+
 private:
-    std::shared_ptr<CelestialBodySystem> _system;
     std::vector<GLuint> _indices;
-    std::vector<float> displacements;
+    std::vector<float> _displacements;
 };

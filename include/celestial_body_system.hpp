@@ -15,6 +15,7 @@
 #include "celestial_body.hpp"
 #include "octree.hpp"
 #include "sphere.hpp"
+#include "gravitational_grid.hpp"
 
 /**
  * \brief Celestial body system class
@@ -22,6 +23,7 @@
  **/
 class CelestialBodySystem : public axolote::Drawable {
 public:
+    std::shared_ptr<GravGrid> grav_grid;
     /** Octree **/
     OcTree octree;
     /** Sphere mesh OpenGL object **/
