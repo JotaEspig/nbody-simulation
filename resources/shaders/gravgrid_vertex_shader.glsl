@@ -1,8 +1,11 @@
-#version 330 core
+#version 430 core
 layout(location = 0) in vec3 axolote_aPos;
 layout(location = 1) in vec4 axolote_aColor;
 layout(location = 2) in vec2 axolote_aTex;
 layout(location = 3) in vec3 axolote_aNormal;
+layout(std430, binding = 0) buffer Displacements {
+    float displacements[];
+};
 
 out vec4 axolote_color;
 out vec2 axolote_tex_coord;
@@ -13,9 +16,6 @@ uniform mat4 axolote_model;
 // WARNING: This uniform is NOT set in the
 // GMesh class, you have to set them manually
 uniform mat4 axolote_camera;
-
-uniform float[10000] displacements;
-uniform float displacements_count;
 
 void main() {
     mat4 translation = mat4(1.0);

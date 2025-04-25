@@ -55,6 +55,14 @@ GravGrid::GravGrid(int size, float width) {
 
     _displacements.clear();
     _displacements.resize(_indices.size());
+
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(
+        GL_SHADER_STORAGE_BUFFER, sizeof(float) * _displacements.capacity(),
+        (void *)0, GL_DYNAMIC_DRAW
+    );
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 }
 
 void GravGrid::update_for_body(std::shared_ptr<CelestialBody> c) {
@@ -83,14 +91,9 @@ void GravGrid::draw() {
     gmodel->meshes[0].default_draw_binds(_model_matrix);
     gmodel->meshes[0].vao()->bind();
 
-    get_shaders()[0]->set_uniform_float(
-        "displacements_count", _displacements.size()
-    );
-    for (std::size_t i = 0; i < _displacements.size(); ++i) {
-        std::string name = "displacements[" + std::to_string(i) + "]";
-        get_shaders()[0]->set_uniform_float(name.c_str(), _displacements[i]);
-    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo); // bind ssbo
     glDrawElements(GL_LINES, _indices.size(), GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind ssbo
 
     gmodel->meshes[0].vao()->unbind();
     gmodel->meshes[0].default_draw_unbinds();

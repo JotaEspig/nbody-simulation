@@ -6,6 +6,8 @@
 
 class GravGrid : public axolote::Object3D {
 public:
+    GLuint ssbo = 0;
+
     GravGrid(int size, float width = 10);
 
     void update_for_body(std::shared_ptr<CelestialBody> c);

@@ -158,6 +158,14 @@ void CelestialBodySystem::barnes_hut_algorithm(double dt) {
         }
     }
 
+    if (grav_grid) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, grav_grid->ssbo);
+        glBufferSubData(
+            GL_SHADER_STORAGE_BUFFER, 0,
+            grav_grid->_displacements.size() * sizeof(float),
+            grav_grid->_displacements.data()
+        );
+    }
     _celestial_bodies = std::move(active_bodies);
 }
 
