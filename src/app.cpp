@@ -150,7 +150,7 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
             }
         );
         glm::vec3 biggest = bodies[0]->pos;
-        int amount = (int)glm::length(biggest) + 30;
+        int amount = (int)glm::length(biggest) + 50;
         std::cout << amount << std::endl;
         std::cout << amount / 30 << std::endl;
         auto grav_grid = std::make_shared<GravGrid>(amount, amount / 30);

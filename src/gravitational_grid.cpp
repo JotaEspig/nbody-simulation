@@ -67,7 +67,7 @@ void GravGrid::update_for_body(std::shared_ptr<CelestialBody> c) {
         float dist = glm::distance(vertex_pos, pos) / 10.0f;
 
         // Do not allow division by zero or rs tending to infinity
-        dist = std::max(dist, 0.1f);
+        dist = std::max(dist, 0.05f);
         double rs = (2 * G * c->mass()) / (dist * dist);
         // Multiply by 10000 to increase the visual effect of gravity
         double w = 2 * std::sqrt(rs * (dist - rs)) * 25000;
