@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::string version = get_version_from_file(".cz.toml");
+    std::string version = get_version_from_file(std::string(PROJECT_DIR) + "/" + ".cz.toml");
     std::string title = "N-Body Simulation";
     if (!version.empty()) {
         title += " v" + version;
