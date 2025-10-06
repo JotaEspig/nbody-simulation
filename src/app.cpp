@@ -1,3 +1,6 @@
+#define GLM_ENABLE_EXPERIMENTAL
+#define DEBUG
+
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
@@ -9,13 +12,14 @@
 #include <string>
 #include <vector>
 
+#include <axolote/object3d.hpp>
+#include <axolote/utils.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <nlohmann/json.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <nlohmann/json.hpp>
 
 #include "app.hpp"
 #include "gravitational_grid.hpp"
@@ -93,6 +97,7 @@ void App::process_input_real_time_mode() {
 }
 
 void App::main_loop(const char *json_filename, bool use_grav_grid) {
+    glfwSetWindowUserPointer(window(), this);
     set_color(0.0f, 0.0f, 0.0f, 1.0f);
     using json = nlohmann::json;
     std::ifstream file(json_filename);
@@ -113,6 +118,10 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
         path("resources/shaders/gravgrid_vertex_shader.glsl"),
         path("resources/shaders/gmesh_base_fragment_shader.glsl")
     );
+    auto object3d_shader = axolote::gl::Shader::create(
+        path("resources/shaders/object3d_base_vertex_shader.glsl"),
+        path("resources/shaders/object3d_base_fragment_shader.glsl")
+    );
 
     // Celestial Body system
     bodies_system->setup_using_json(data);
@@ -127,7 +136,16 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
     scene->context->camera.fov = 70.0f;
     scene->context->camera.speed = 50.0f;
     scene->context->camera.max_dist = 3000.0f;
+
     latitude = 30.0f;
+
+    auto sphere = std::make_shared<axolote::Object3D>();
+    sphere->load_model(
+        path("resources/models/sphere/sphere.obj"),
+        glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}
+    );
+    sphere->bind_shader(object3d_shader);
+    scene->add_drawable(sphere);
 
     if (use_grav_grid) {
         auto bodies = bodies_system->celestial_bodies();

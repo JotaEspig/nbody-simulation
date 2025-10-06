@@ -24,6 +24,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm REQUIRED)
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 find_package(assimp CONFIG REQUIRED)
+find_package(OpenAL CONFIG REQUIRED)
 find_package(axolote REQUIRED)
 
 
