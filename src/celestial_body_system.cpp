@@ -1,3 +1,5 @@
+#define DEBUG
+#include <axolote/utils.hpp>
 #include <cstddef>
 #include <memory>
 #include <vector>

@@ -12,8 +12,7 @@
 #include <string>
 #include <vector>
 
-#include <axolote/object3d.hpp>
-#include <axolote/utils.hpp>
+#include <axolote/engine.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -114,13 +113,9 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
         path("resources/shaders/post_processing_base_vertex_shader.glsl"),
         path("resources/shaders/post_processing_base_fragment_shader.glsl")
     );
-    auto gmesh_shader = axolote::gl::Shader::create(
+    auto gravgrid_shader = axolote::gl::Shader::create(
         path("resources/shaders/gravgrid_vertex_shader.glsl"),
         path("resources/shaders/gmesh_base_fragment_shader.glsl")
-    );
-    auto object3d_shader = axolote::gl::Shader::create(
-        path("resources/shaders/object3d_base_vertex_shader.glsl"),
-        path("resources/shaders/object3d_base_fragment_shader.glsl")
     );
 
     // Celestial Body system
@@ -136,43 +131,13 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
     scene->context->camera.fov = 70.0f;
     scene->context->camera.speed = 50.0f;
     scene->context->camera.max_dist = 3000.0f;
-
     latitude = 30.0f;
-
-    auto sphere = std::make_shared<axolote::Object3D>();
-    sphere->load_model(
-        path("resources/models/sphere/sphere.obj"),
-        glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}
-    );
-    sphere->bind_shader(object3d_shader);
-    scene->add_drawable(sphere);
 
     if (use_grav_grid) {
         auto bodies = bodies_system->celestial_bodies();
-        std::sort(
-            bodies.begin(), bodies.end(),
-            [](const std::shared_ptr<CelestialBody> &a,
-               const std::shared_ptr<CelestialBody> &b) {
-                if (a->pos.x > b->pos.x) {
-                    return true;
-                }
-                else if (a->pos.x < b->pos.x) {
-                    return false;
-                }
-                else if (a->pos.z > b->pos.z) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        );
-        glm::vec3 biggest = bodies[0]->pos;
-        int amount = (int)glm::length(biggest) + 50;
-        std::cout << amount << std::endl;
-        std::cout << amount / 30 << std::endl;
-        auto grav_grid = std::make_shared<GravGrid>(amount, amount / 30);
-        grav_grid->bind_shader(gmesh_shader);
+        auto grav_grid
+            = std::make_shared<GravGrid>( bodies);
+        grav_grid->bind_shader(gravgrid_shader);
         scene->add_drawable(grav_grid);
 
         bodies_system->grav_grid = grav_grid;
