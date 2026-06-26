@@ -100,7 +100,7 @@ public:
          **/
         glm::vec3 net_acceleration_on_body(
             std::shared_ptr<CelestialBody> body, double dt
-        );
+        ) const;
         /**
          * \brief Calculates the ratio width / distance to center of mass
          * \author João Vitor Espig (JotaEspig)
@@ -122,8 +122,8 @@ public:
          * \param other - other body
          * \returns true if the body should be called
          **/
-        bool should_be_called(const std::shared_ptr<CelestialBody> &other
-        ) const;
+        bool
+        should_be_called(const std::shared_ptr<CelestialBody> &other) const;
     };
 
     /** Simulation precision parameter, a high value means a low simulation
@@ -162,6 +162,7 @@ public:
      * \param dt - delta time
      * \returns net acceleration
      **/
-    glm::vec3
-    net_acceleration_on_body(std::shared_ptr<CelestialBody> body, double dt);
+    glm::vec3 net_acceleration_on_body(
+        std::shared_ptr<CelestialBody> body, double dt
+    ) const;
 };

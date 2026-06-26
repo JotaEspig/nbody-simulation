@@ -1,6 +1,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #define DEBUG
 
+#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
@@ -25,6 +26,18 @@
 #include "utils.hpp"
 
 #define UNUSED(x) (void)(x)
+
+struct BenchmarkResult {
+    CelestialBodySystem::SimulationAlgorithm algorithm;
+    std::string name;
+
+    std::size_t bodies;
+    std::size_t iterations;
+    double elapsed;
+    double steps_per_second;
+    double bodies_steps_per_second;
+    double simulated_seconds_per_second;
+};
 
 struct BodyDataJSON {
     double mass;
@@ -135,8 +148,7 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
 
     if (use_grav_grid) {
         auto bodies = bodies_system->celestial_bodies();
-        auto grav_grid
-            = std::make_shared<GravGrid>( bodies);
+        auto grav_grid = std::make_shared<GravGrid>(bodies);
         grav_grid->bind_shader(gravgrid_shader);
         scene->add_drawable(grav_grid);
 
@@ -166,6 +178,133 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
 
         finish_frame();
     }
+}
+
+void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
+    using json = nlohmann::json;
+
+    std::ifstream file(json_filename);
+    json data = json::parse(file);
+
+    const double dt = (1.0 / 60.0) * static_cast<double>(data["dt_multiplier"]);
+
+    const std::vector<BenchmarkEntry> algorithms
+        = {{CelestialBodySystem::SimulationAlgorithm::Naive, "Naive O(n²)"},
+           {CelestialBodySystem::SimulationAlgorithm::BarnesHut, "Barnes-Hut"},
+           {CelestialBodySystem::SimulationAlgorithm::BarnesHutOpenMP,
+            "Barnes-Hut + OpenMP"}};
+
+    std::cout << "=============================================\n";
+    std::cout << "Benchmark\n";
+    std::cout << "Configuration : " << json_filename << '\n';
+    std::cout << "Duration      : " << duration.count() << " s each\n";
+    std::cout << "=============================================\n\n";
+
+    std::vector<BenchmarkResult> results;
+
+    for (const auto &benchmark : algorithms) {
+        // Reset simulation
+        bodies_system->setup_using_json(data);
+        bodies_system->algorithm = benchmark.algorithm;
+
+        // Warm-up (not measured)
+        std::cout << "Warming up...\n";
+        constexpr int warmup_iterations = 10;
+        for (int i = 0; i < warmup_iterations; ++i) {
+            bodies_system->simulate(dt);
+        }
+        std::cout << "Finished warm up\n";
+
+        // Restart simulation so every algorithm starts from the same state
+        bodies_system->setup_using_json(data);
+
+        auto start = std::chrono::steady_clock::now();
+        auto end = start + duration;
+
+        std::size_t iterations = 0;
+
+        while (std::chrono::steady_clock::now() < end) {
+            bodies_system->simulate(dt);
+            ++iterations;
+        }
+
+        auto elapsed = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - start
+        );
+
+        const auto body_count = bodies_system->celestial_bodies().size();
+
+        std::cout << benchmark.name << '\n';
+        std::cout << "---------------------------------------------\n";
+        std::cout << "Bodies                : " << body_count << '\n';
+        std::cout << "Elapsed               : " << elapsed.count() << " s\n";
+        std::cout << "Simulation steps      : " << iterations << '\n';
+        std::cout << "Steps / second        : " << iterations / elapsed.count()
+                  << '\n';
+        std::cout << "Bodies·steps / second : "
+                  << (iterations * body_count) / elapsed.count() << '\n';
+        std::cout << "Simulated seconds/sec : "
+                  << (iterations * dt) / elapsed.count() << '\n';
+        std::cout << '\n';
+        results.push_back(
+            {benchmark.algorithm, benchmark.name, body_count, iterations,
+             elapsed.count(), iterations / elapsed.count(),
+             (iterations * body_count) / elapsed.count(),
+             (iterations * dt) / elapsed.count()}
+        );
+    }
+
+    std::cout << "=============================================\n";
+    std::cout << "Benchmark Summary\n";
+    std::cout << "=============================================\n\n";
+
+    std::cout << std::left << std::setw(24) << "Algorithm" << std::right
+              << std::setw(15) << "Steps/s" << std::setw(15) << "Speedup"
+              << std::setw(18) << "Sim. sec/s" << '\n';
+
+    std::cout << std::string(72, '-') << '\n';
+
+    const double baseline = results.front().steps_per_second;
+
+    for (const auto &r : results) {
+        std::cout << std::left << std::setw(24) << r.name << std::right
+                  << std::setw(15) << std::fixed << std::setprecision(2)
+                  << r.steps_per_second << std::setw(14)
+                  << r.steps_per_second / baseline << "x" << std::setw(18)
+                  << r.simulated_seconds_per_second << '\n';
+    }
+
+    std::cout << '\n';
+
+    const auto &naive = results[0];
+    const auto &barnes = results[1];
+    const auto &omp = results[2];
+
+    auto printComparison = [](const BenchmarkResult &a,
+                              const BenchmarkResult &b) {
+        const double speedup = b.steps_per_second / a.steps_per_second;
+        const double improvement = (b.steps_per_second - a.steps_per_second)
+                                   / a.steps_per_second * 100.0;
+
+        std::cout << b.name << " vs " << a.name << '\n'
+                  << "  Speedup     : " << std::fixed << std::setprecision(2)
+                  << speedup << "x\n"
+                  << "  Improvement : +" << improvement << "%\n\n";
+    };
+
+    printComparison(naive, barnes);
+    printComparison(barnes, omp);
+    printComparison(naive, omp);
+
+    const auto winner = std::max_element(
+        results.begin(), results.end(),
+        [](const BenchmarkResult &a, const BenchmarkResult &b) {
+            return a.steps_per_second < b.steps_per_second;
+        }
+    );
+
+    std::cout << "Winner: " << winner->name << '\n';
+    std::cout << "=============================================\n";
 }
 
 void App::bake(const char *json_filename) {

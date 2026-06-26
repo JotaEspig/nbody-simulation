@@ -150,7 +150,7 @@ OcTree::Node::find_correct_child(const glm::vec3 &pos) {
 
 glm::vec3 OcTree::Node::net_acceleration_on_body(
     std::shared_ptr<CelestialBody> body, double dt
-) {
+) const {
     if (body->merged) {
         return glm::vec3{0.0f, 0.0f, 0.0f};
     }
@@ -275,7 +275,8 @@ operator<<(std::ostream &os, std::unique_ptr<OcTree::Node> &node) {
     return os;
 }
 
-bool OcTree::Node::should_be_called(const std::shared_ptr<CelestialBody> &other
+bool OcTree::Node::should_be_called(
+    const std::shared_ptr<CelestialBody> &other
 ) const {
     return !(is_leaf && (body == nullptr || body == other || body->merged));
 }
@@ -319,7 +320,7 @@ void OcTree::insert(const std::shared_ptr<CelestialBody> &body) {
 
 glm::vec3 OcTree::net_acceleration_on_body(
     std::shared_ptr<CelestialBody> body, double dt
-) {
+) const {
     if (root == nullptr || body->merged)
         return glm::vec3{0.0f, 0.0f, 0.0f};
 

@@ -9,6 +9,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <nlohmann/json.hpp>
+#include <omp.h>
 
 #include "celestial_body_system.hpp"
 #include "octree.hpp"
@@ -120,55 +121,20 @@ void CelestialBodySystem::build_octree() {
     }
 }
 
-void CelestialBodySystem::naive_algorithm(double dt) {
-    for (auto body0 : _celestial_bodies) {
-        for (auto body1 : _celestial_bodies) {
-            if (body0 == body1)
-                continue;
+void CelestialBodySystem::simulate(double dt) {
+    switch (algorithm) {
+    case SimulationAlgorithm::Naive:
+        naive_algorithm(dt);
+        break;
 
-            glm::vec3 acc = body0->calculate_acceleration_vec(*body1);
-            body0->velocity += acc * (float)dt;
-            body0->pos += body0->velocity * (float)dt;
-        }
+    case SimulationAlgorithm::BarnesHut:
+        barnes_hut_algorithm(dt);
+        break;
+
+    case SimulationAlgorithm::BarnesHutOpenMP:
+        barnes_hut_algorithm_openmp(dt);
+        break;
     }
-}
-
-void CelestialBodySystem::barnes_hut_algorithm(double dt) {
-    build_octree();
-    if (grav_grid) {
-        // all displacement values to 0
-        for (std::size_t i = 0; i < grav_grid->_displacements.capacity(); ++i) {
-            grav_grid->_displacements[i] = 0.0;
-        }
-    }
-
-    std::vector<std::shared_ptr<CelestialBody>> active_bodies;
-    for (auto &c : _celestial_bodies) {
-        bool should_erase = std::abs(c->pos.x) > octree.initial_width / 2
-                            || std::abs(c->pos.y) > octree.initial_width / 2
-                            || std::abs(c->pos.z) > octree.initial_width / 2
-                            || c->merged;
-        if (!should_erase) {
-            active_bodies.push_back(c);
-            glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
-            c->velocity += acc * (float)dt;
-            c->pos += c->velocity * (float)dt;
-
-            if (grav_grid) {
-                grav_grid->update_for_body(c);
-            }
-        }
-    }
-
-    if (grav_grid) {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, grav_grid->ssbo);
-        glBufferSubData(
-            GL_SHADER_STORAGE_BUFFER, 0,
-            grav_grid->_displacements.size() * sizeof(float),
-            grav_grid->_displacements.data()
-        );
-    }
-    _celestial_bodies = std::move(active_bodies);
 }
 
 std::vector<std::shared_ptr<CelestialBody>>
@@ -212,10 +178,10 @@ CelestialBodySystem::get_shaders() const {
 void CelestialBodySystem::update(double absolute_time, double dt) {
     UNUSED(absolute_time);
 
-    // naive_algorithm(dt);
-    barnes_hut_algorithm(dt);
-
+    simulate(dt);
+    update_gravity_grid();
     update_vbos();
+    upload_gravity_grid();
 }
 
 void CelestialBodySystem::draw() {
@@ -230,4 +196,92 @@ void CelestialBodySystem::draw() {
 
 void CelestialBodySystem::draw(const glm::mat4 &mat) {
     UNUSED(mat);
+}
+
+void CelestialBodySystem::naive_algorithm(double dt) {
+    for (auto body0 : _celestial_bodies) {
+        for (auto body1 : _celestial_bodies) {
+            if (body0 == body1)
+                continue;
+
+            glm::vec3 acc = body0->calculate_acceleration_vec(*body1);
+            body0->velocity += acc * (float)dt;
+            body0->pos += body0->velocity * (float)dt;
+        }
+    }
+}
+
+void CelestialBodySystem::barnes_hut_algorithm(double dt) {
+    build_octree();
+
+    std::vector<std::shared_ptr<CelestialBody>> active_bodies;
+    for (auto &c : _celestial_bodies) {
+        bool should_erase = std::abs(c->pos.x) > octree.initial_width / 2
+                            || std::abs(c->pos.y) > octree.initial_width / 2
+                            || std::abs(c->pos.z) > octree.initial_width / 2
+                            || c->merged;
+
+        if (!should_erase) {
+            active_bodies.push_back(c);
+            glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
+            c->velocity += acc * (float)dt;
+            c->pos += c->velocity * (float)dt;
+        }
+    }
+
+    _celestial_bodies = std::move(active_bodies);
+}
+
+void CelestialBodySystem::barnes_hut_algorithm_openmp(double dt) {
+    build_octree();
+
+    std::vector<std::shared_ptr<CelestialBody>> active_bodies;
+    active_bodies.reserve(_celestial_bodies.size());
+    for (auto &c : _celestial_bodies) {
+        bool should_erase = std::abs(c->pos.x) > octree.initial_width / 2
+                            || std::abs(c->pos.y) > octree.initial_width / 2
+                            || std::abs(c->pos.z) > octree.initial_width / 2
+                            || c->merged;
+
+        if (!should_erase)
+            active_bodies.push_back(c);
+    }
+
+#pragma omp parallel for schedule(guided)
+    for (std::size_t i = 0; i < active_bodies.size(); ++i) {
+        auto &c = active_bodies[i];
+        glm::vec3 acc = octree.net_acceleration_on_body(c, dt);
+        c->velocity += acc * static_cast<float>(dt);
+        c->pos += c->velocity * static_cast<float>(dt);
+    }
+
+    _celestial_bodies = std::move(active_bodies);
+}
+
+void CelestialBodySystem::update_gravity_grid() {
+    if (!grav_grid) {
+        return;
+    }
+
+    std::fill(
+        grav_grid->_displacements.begin(), grav_grid->_displacements.end(), 0.0f
+    );
+
+    for (auto &body : _celestial_bodies) {
+        grav_grid->update_for_body(body);
+    }
+}
+
+void CelestialBodySystem::upload_gravity_grid() {
+    if (!grav_grid) {
+        return;
+    }
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, grav_grid->ssbo);
+
+    glBufferSubData(
+        GL_SHADER_STORAGE_BUFFER, 0,
+        grav_grid->_displacements.size() * sizeof(float),
+        grav_grid->_displacements.data()
+    );
 }

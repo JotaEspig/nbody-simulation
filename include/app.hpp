@@ -37,6 +37,16 @@ public:
      **/
     void main_loop(const char *json_filename, bool use_grav_grid = false);
     /**
+     * @brief benchmarks the algorithms
+     *
+     * @param json_filename - json filename
+     * @param duration - duration in seconds
+     */
+    void benchmark(
+        const char *json_filename,
+        std::chrono::seconds duration = std::chrono::seconds(10)
+    );
+    /**
      * \brief bake simulation
      * \author João Vitor Espig (JotaEspig)
      * \param json_filename - json filename
@@ -62,6 +72,10 @@ public:
     void process_input_real_time_mode();
 
 private:
+    struct BenchmarkEntry {
+        CelestialBodySystem::SimulationAlgorithm algorithm;
+        const char *name;
+    };
     /**
      * \brief update focus point
      * \author João Vitor Espig (JotaEspig)

@@ -4,6 +4,8 @@
 
 #include "app.hpp"
 
+enum class Mode { Simulate, Bake, Render, Benchmark };
+
 std::string get_version_from_file(const std::string &filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -30,52 +32,63 @@ std::string get_version_from_file(const std::string &filename) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        std::cout << "Invalid command" << std::endl
-                  << "Usage: ./bin/nbody-simulation <config json file>"
-                  << std::endl;
+        std::cout << "Usage: ./bin/nbody-simulation <config.json> [options]\n";
         return 1;
     }
 
-    std::string version = get_version_from_file(std::string(PROJECT_DIR) + "/" + ".cz.toml");
+    std::string version
+        = get_version_from_file(std::string(PROJECT_DIR) + "/.cz.toml");
+
     std::string title = "N-Body Simulation";
     if (!version.empty()) {
         title += " v" + version;
     }
 
     std::cout << title << std::endl;
-    int choice = 0;
+
+    Mode mode = Mode::Simulate;
     bool use_grav_grid = false;
+
     for (int i = 2; i < argc; ++i) {
-        if (std::string(argv[i]) == "--simulate") {
-            choice = 0;
+        std::string arg = argv[i];
+
+        if (arg == "--simulate") {
+            mode = Mode::Simulate;
         }
-        else if (std::string(argv[i]) == "--bake") {
-            choice = 1;
+        else if (arg == "--bake") {
+            mode = Mode::Bake;
         }
-        else if (std::string(argv[i]) == "--render") {
-            choice = 2;
+        else if (arg == "--render") {
+            mode = Mode::Render;
         }
-        else if (std::string(argv[i]) == "--grav-grid") {
+        else if (arg == "--benchmark") {
+            mode = Mode::Benchmark;
+        }
+        else if (arg == "--grav-grid") {
             use_grav_grid = true;
         }
-        else if (std::string(argv[i]) == "--version") {
+        else if (arg == "--version") {
             std::cout << title << std::endl;
             return 0;
         }
-        else {
+        else if (arg == "--help") {
             std::cout
-                << "Usage: ./bin/nbody-simulation <config json file> [options]"
-                << std::endl
-                << "Options:" << std::endl
-                << "  --version     Show version" << std::endl
-                << "  --simulate    Simulate the system (Default)" << std::endl
-                << "  --bake        Bake the simulation" << std::endl
-                << "  --render      Render the simulation" << std::endl
-                << "  --grav-grid   Use gravitational grid (Only works on "
-                   "--simulate)"
-                << std::endl
-                << "  --help       Show this help message" << std::endl;
+                << "Usage: ./bin/nbody-simulation <config.json> [options]\n\n"
+                << "Options:\n"
+                << "  --simulate     Run simulation (default)\n"
+                << "  --bake         Bake the simulation\n"
+                << "  --render       Render baked simulation\n"
+                << "  --benchmark    Benchmark all simulation algorithms\n"
+                << "  --grav-grid    Enable gravitational grid (simulation "
+                   "only)\n"
+                << "  --version      Show version\n"
+                << "  --help         Show this help message\n";
             return 0;
+        }
+        else {
+            std::cerr << "Unknown option: " << arg << '\n';
+            std::cerr << "Use --help for usage information.\n";
+            return 1;
         }
     }
 
@@ -83,12 +96,27 @@ int main(int argc, char **argv) {
     app.set_title(title);
     app.set_window_size(800, 800);
     app.set_color(0x10, 0x10, 0x10);
-    std::string json_path = std::string(argv[1]);
-    if (choice == 1)
+
+    const std::string json_path = argv[1];
+
+    switch (mode) {
+    case Mode::Bake:
         app.bake(json_path.c_str());
-    else if (choice == 2)
+        break;
+
+    case Mode::Render:
         app.render_loop(json_path.c_str());
-    else
+        break;
+
+    case Mode::Benchmark:
+        app.benchmark(json_path.c_str());
+        break;
+
+    case Mode::Simulate:
+    default:
         app.main_loop(json_path.c_str(), use_grav_grid);
+        break;
+    }
+
     return 0;
 }

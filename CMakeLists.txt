@@ -25,6 +25,7 @@ find_package(glm REQUIRED)
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 find_package(assimp CONFIG REQUIRED)
 find_package(OpenAL CONFIG REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(axolote REQUIRED)
 
 
@@ -70,7 +71,7 @@ target_link_libraries(
     nbody-simulation
     PRIVATE
     axolote::axolote
-    ${OPENGL_LIBRARIES} glfw assimp::assimp
+    ${OPENGL_LIBRARIES} glfw assimp::assimp OpenMP::OpenMP_CXX
 )
 
 # Header files
