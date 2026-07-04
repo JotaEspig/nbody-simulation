@@ -247,7 +247,7 @@ void CelestialBodySystem::barnes_hut_algorithm_openmp(double dt) {
             active_bodies.push_back(c);
     }
 
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(dynamic)
     for (std::size_t i = 0; i < active_bodies.size(); ++i) {
         auto &c = active_bodies[i];
         glm::vec3 acc = octree.net_acceleration_on_body(c, dt);

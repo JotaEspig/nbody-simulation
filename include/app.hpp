@@ -42,10 +42,8 @@ public:
      * @param json_filename - json filename
      * @param duration - duration in seconds
      */
-    void benchmark(
-        const char *json_filename,
-        std::chrono::seconds duration = std::chrono::seconds(10)
-    );
+    void
+    benchmark(const char *json_filename, std::size_t simulation_steps = 1000);
     /**
      * \brief bake simulation
      * \author João Vitor Espig (JotaEspig)

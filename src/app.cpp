@@ -37,6 +37,7 @@ struct BenchmarkResult {
     double steps_per_second;
     double bodies_steps_per_second;
     double simulated_seconds_per_second;
+    double elapsed_seconds;
 };
 
 struct BodyDataJSON {
@@ -180,7 +181,9 @@ void App::main_loop(const char *json_filename, bool use_grav_grid) {
     }
 }
 
-void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
+void App::benchmark(
+    const char *json_filename, std::size_t simulation_steps /* = 10000 */
+) {
     using json = nlohmann::json;
 
     std::ifstream file(json_filename);
@@ -188,19 +191,22 @@ void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
 
     const double dt = (1.0 / 60.0) * static_cast<double>(data["dt_multiplier"]);
 
-    const std::vector<BenchmarkEntry> algorithms
-        = {{CelestialBodySystem::SimulationAlgorithm::Naive, "Naive O(n²)"},
-           {CelestialBodySystem::SimulationAlgorithm::BarnesHut, "Barnes-Hut"},
-           {CelestialBodySystem::SimulationAlgorithm::BarnesHutOpenMP,
-            "Barnes-Hut + OpenMP"}};
+    const std::vector<BenchmarkEntry> algorithms = {
+        {CelestialBodySystem::SimulationAlgorithm::Naive, "Naive O(n²)"},
+        {CelestialBodySystem::SimulationAlgorithm::BarnesHut, "Barnes-Hut"},
+        {CelestialBodySystem::SimulationAlgorithm::BarnesHutOpenMP,
+         "Barnes-Hut + OpenMP"},
+    };
 
     std::cout << "=============================================\n";
     std::cout << "Benchmark\n";
-    std::cout << "Configuration : " << json_filename << '\n';
-    std::cout << "Duration      : " << duration.count() << " s each\n";
+    std::cout << "Configuration    : " << json_filename << '\n';
+    std::cout << "Simulation steps : " << simulation_steps << '\n';
     std::cout << "=============================================\n\n";
 
     std::vector<BenchmarkResult> results;
+
+    constexpr std::size_t warmup_steps = 100;
 
     for (const auto &benchmark : algorithms) {
         // Reset simulation
@@ -208,25 +214,30 @@ void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
         bodies_system->algorithm = benchmark.algorithm;
 
         // Warm-up (not measured)
-        std::cout << "Warming up...\n";
-        constexpr int warmup_iterations = 10;
-        for (int i = 0; i < warmup_iterations; ++i) {
+        std::cout << "Warming up " << benchmark.name << "...\n";
+        for (std::size_t i = 0; i < warmup_steps; ++i) {
             bodies_system->simulate(dt);
         }
-        std::cout << "Finished warm up\n";
+        std::cout << "Finished warm-up for " << benchmark.name << "\n\n";
 
         // Restart simulation so every algorithm starts from the same state
         bodies_system->setup_using_json(data);
+        bodies_system->algorithm = benchmark.algorithm;
 
         auto start = std::chrono::steady_clock::now();
-        auto end = start + duration;
 
-        std::size_t iterations = 0;
-
-        while (std::chrono::steady_clock::now() < end) {
+        const std::size_t progress_step
+            = std::max<std::size_t>(1, simulation_steps / 10);
+        for (std::size_t i = 0; i < simulation_steps; ++i) {
+            if ((i + 1) % progress_step == 0 || i + 1 == simulation_steps) {
+                std::cout << "\rRunning " << benchmark.name << ": " << (i + 1)
+                          << "/" << simulation_steps << " ("
+                          << ((i + 1) * 100 / simulation_steps) << "%)"
+                          << std::flush;
+            }
             bodies_system->simulate(dt);
-            ++iterations;
         }
+        std::cout << "\nFinished " << benchmark.name << "\n\n";
 
         auto elapsed = std::chrono::duration<double>(
             std::chrono::steady_clock::now() - start
@@ -234,51 +245,62 @@ void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
 
         const auto body_count = bodies_system->celestial_bodies().size();
 
+        const double elapsed_seconds = elapsed.count();
+        const double steps_per_second = simulation_steps / elapsed_seconds;
+        const double body_steps_per_second
+            = (simulation_steps * body_count) / elapsed_seconds;
+        const double simulated_seconds_per_second
+            = (simulation_steps * dt) / elapsed_seconds;
+
         std::cout << benchmark.name << '\n';
         std::cout << "---------------------------------------------\n";
         std::cout << "Bodies                : " << body_count << '\n';
-        std::cout << "Elapsed               : " << elapsed.count() << " s\n";
-        std::cout << "Simulation steps      : " << iterations << '\n';
-        std::cout << "Steps / second        : " << iterations / elapsed.count()
+        std::cout << "Simulation steps      : " << simulation_steps << '\n';
+        std::cout << "Elapsed               : " << std::fixed
+                  << std::setprecision(3) << elapsed_seconds << " s\n";
+        std::cout << "Steps / second        : " << std::setprecision(2)
+                  << steps_per_second << '\n';
+        std::cout << "Bodies·steps / second : " << body_steps_per_second
                   << '\n';
-        std::cout << "Bodies·steps / second : "
-                  << (iterations * body_count) / elapsed.count() << '\n';
-        std::cout << "Simulated seconds/sec : "
-                  << (iterations * dt) / elapsed.count() << '\n';
-        std::cout << '\n';
-        results.push_back(
-            {benchmark.algorithm, benchmark.name, body_count, iterations,
-             elapsed.count(), iterations / elapsed.count(),
-             (iterations * body_count) / elapsed.count(),
-             (iterations * dt) / elapsed.count()}
-        );
+        std::cout << "Simulated seconds/sec : " << simulated_seconds_per_second
+                  << "\n\n";
+
+        results.push_back({
+            benchmark.algorithm,
+            benchmark.name,
+            body_count,
+            simulation_steps,
+            elapsed_seconds,
+            steps_per_second,
+            body_steps_per_second,
+            simulated_seconds_per_second,
+        });
     }
 
+    std::cout << "\n";
     std::cout << "=============================================\n";
     std::cout << "Benchmark Summary\n";
     std::cout << "=============================================\n\n";
 
     std::cout << std::left << std::setw(24) << "Algorithm" << std::right
-              << std::setw(15) << "Steps/s" << std::setw(15) << "Speedup"
-              << std::setw(18) << "Sim. sec/s" << '\n';
+              << std::setw(15) << "Time (s)" << std::setw(18) << "Steps/s"
+              << std::setw(15) << "Speedup" << std::setw(18) << "Sim sec/s"
+              << '\n';
 
-    std::cout << std::string(72, '-') << '\n';
+    std::cout << std::string(90, '-') << '\n';
 
     const double baseline = results.front().steps_per_second;
 
     for (const auto &r : results) {
         std::cout << std::left << std::setw(24) << r.name << std::right
-                  << std::setw(15) << std::fixed << std::setprecision(2)
+                  << std::setw(15) << std::fixed << std::setprecision(3)
+                  << r.elapsed_seconds << std::setw(18) << std::setprecision(2)
                   << r.steps_per_second << std::setw(14)
                   << r.steps_per_second / baseline << "x" << std::setw(18)
                   << r.simulated_seconds_per_second << '\n';
     }
 
-    std::cout << '\n';
-
-    const auto &naive = results[0];
-    const auto &barnes = results[1];
-    const auto &omp = results[2];
+    std::cout << "\n";
 
     auto printComparison = [](const BenchmarkResult &a,
                               const BenchmarkResult &b) {
@@ -286,15 +308,15 @@ void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
         const double improvement = (b.steps_per_second - a.steps_per_second)
                                    / a.steps_per_second * 100.0;
 
-        std::cout << b.name << " vs " << a.name << '\n'
-                  << "  Speedup     : " << std::fixed << std::setprecision(2)
-                  << speedup << "x\n"
-                  << "  Improvement : +" << improvement << "%\n\n";
+        std::cout << b.name << " vs " << a.name << '\n';
+        std::cout << "  Speedup     : " << std::fixed << std::setprecision(2)
+                  << speedup << "x\n";
+        std::cout << "  Improvement : +" << improvement << "%\n\n";
     };
 
-    printComparison(naive, barnes);
-    printComparison(barnes, omp);
-    printComparison(naive, omp);
+    printComparison(results[0], results[1]);
+    printComparison(results[1], results[2]);
+    printComparison(results[0], results[2]);
 
     const auto winner = std::max_element(
         results.begin(), results.end(),
@@ -303,7 +325,10 @@ void App::benchmark(const char *json_filename, std::chrono::seconds duration) {
         }
     );
 
-    std::cout << "Winner: " << winner->name << '\n';
+    std::cout << "Winner : " << winner->name << '\n';
+    std::cout << "Speed  : " << std::fixed << std::setprecision(2)
+              << winner->steps_per_second << " steps/s\n";
+
     std::cout << "=============================================\n";
 }
 
