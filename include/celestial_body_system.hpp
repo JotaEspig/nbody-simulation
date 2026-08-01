@@ -13,6 +13,7 @@
 #include <nlohmann/json.hpp>
 
 #include "celestial_body.hpp"
+#include "gravitational_grid.hpp"
 #include "octree.hpp"
 #include "sphere.hpp"
 
@@ -22,6 +23,10 @@
  **/
 class CelestialBodySystem : public axolote::Drawable {
 public:
+    enum class SimulationAlgorithm { Naive, BarnesHut, BarnesHutOpenMP };
+    SimulationAlgorithm algorithm = SimulationAlgorithm::BarnesHutOpenMP;
+
+    std::shared_ptr<GravGrid> grav_grid;
     /** Octree **/
     OcTree octree;
     /** Sphere mesh OpenGL object **/
@@ -61,18 +66,6 @@ public:
     std::shared_ptr<CelestialBody>
     add_body(double mass, glm::vec3 pos, glm::vec3 vel);
     /**
-     * \brief Naive algorithm O(n²)
-     * \author João Vitor Espig (JotaEspig)
-     * \param dt - delta time
-     **/
-    void naive_algorithm(double dt);
-    /**
-     * \brief Barnes-Hut algorithm O(n log n)
-     * \author João Vitor Espig (JotaEspig)
-     * \param dt - delta time
-     **/
-    void barnes_hut_algorithm(double dt);
-    /**
      * \brief Get celestial bodies
      * \author João Vitor Espig (JotaEspig)
      * \returns vector of celestial bodies
@@ -83,26 +76,33 @@ public:
      * \author João Vitor Espig (JotaEspig)
      **/
     void update_vbos();
-
+    /**
+     * @brief Simulates according to the algorithm set
+     *
+     * @param dt - delta time
+     */
+    void simulate(double dt);
     /**
      * \brief Bind shader
      * \author João Vitor Espig (JotaEspig)
      * \param shader_program - shader program
      **/
-    void bind_shader(std::shared_ptr<axolote::gl::Shader> shader_program
-    ) override;
+    void
+    bind_shader(std::shared_ptr<axolote::gl::Shader> shader_program) override;
     /**
      * \brief Get shader
      * \author João Vitor Espig (JotaEspig)
      * \returns shader
      **/
-    std::vector<std::shared_ptr<axolote::gl::Shader>> get_shaders() const override;
+    std::vector<std::shared_ptr<axolote::gl::Shader>>
+    get_shaders() const override;
     /**
      * \brief Update
      * \author João Vitor Espig (JotaEspig)
+     * \param absolute_time - absolute time
      * \param dt - delta time
      **/
-    void update(double dt) override;
+    void update(double absolute_time, double dt) override;
     /**
      * \brief Draw
      * \author João Vitor Espig (JotaEspig)
@@ -132,4 +132,32 @@ private:
      * \author João Vitor Espig (JotaEspig)
      **/
     void build_octree();
+    /**
+     * @brief Update gravity grid data
+     *
+     */
+    void update_gravity_grid();
+    /**
+     * @brief Upload gravity grid data into GPU
+     *
+     */
+    void upload_gravity_grid();
+    /**
+     * \brief Naive algorithm O(n²)
+     * \author João Vitor Espig (JotaEspig)
+     * \param dt - delta time
+     **/
+    void naive_algorithm(double dt);
+    /**
+     * \brief Barnes-Hut algorithm O(n log n)
+     * \author João Vitor Espig (JotaEspig)
+     * \param dt - delta time
+     **/
+    void barnes_hut_algorithm(double dt);
+    /**
+     * \brief Barnes-Hut algorithm O(n log n) using OpenMP to parallelize
+     * \author João Vitor Espig (JotaEspig)
+     * \param dt - delta time
+     */
+    void barnes_hut_algorithm_openmp(double dt);
 };

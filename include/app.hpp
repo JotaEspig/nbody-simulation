@@ -33,8 +33,17 @@ public:
      * \brief renders simulation in real time mode
      * \author João Vitor Espig (JotaEspig)
      * \param json_filename - json filename
+     * \param use_grav_grid - use gravitational grid
      **/
-    void main_loop(const char *json_filename = "");
+    void main_loop(const char *json_filename, bool use_grav_grid = false);
+    /**
+     * @brief benchmarks the algorithms
+     *
+     * @param json_filename - json filename
+     * @param duration - duration in seconds
+     */
+    void
+    benchmark(const char *json_filename, std::size_t simulation_steps = 1000);
     /**
      * \brief bake simulation
      * \author João Vitor Espig (JotaEspig)
@@ -52,25 +61,27 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \param delta_t - delta time
      **/
-    void process_input(float delta_t = 1.0f);
+    void process_input();
     /**
      * \brief process especial input used when rendering without baked data
      * \author João Vitor Espig (JotaEspig)
      * \param delta_t - delta time
      **/
-    void process_input_real_time_mode(float delta_t = 1.0f);
+    void process_input_real_time_mode();
 
 private:
+    struct BenchmarkEntry {
+        CelestialBodySystem::SimulationAlgorithm algorithm;
+        const char *name;
+    };
     /**
      * \brief update focus point
      * \author João Vitor Espig (JotaEspig)
-     * \param delta_t - delta time
      **/
-    void update_focus_point(float delta_t);
+    void update_focus_point();
     /**
      * \brief update camera position
      * \author João Vitor Espig (JotaEspig)
-     * \param delta_t - delta time
      **/
-    void update_camera_position(float delta_t);
+    void update_camera_position();
 };

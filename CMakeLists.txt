@@ -10,12 +10,6 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
-option(
-    USE_LOCAL_ASSIMP
-    "Should use local assimp library (located in external folder). Does not work on Windows"
-    OFF
-)
-
 # CMake settings
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -29,28 +23,10 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm REQUIRED)
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
-
-set(ASSIMP_LIB assimp)
-set(ASSIMP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/external/include_assimp)
-if (NOT USE_LOCAL_ASSIMP)
-    find_package(assimp CONFIG REQUIRED)
-    set(ASSIMP_LIB ${ASSIMP_LIB})
-endif ()
-
-
-add_library(axolote SHARED IMPORTED)
-if (WIN32 OR MSVC)
-    set_target_properties(axolote PROPERTIES 
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.dll"
-        IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/external/lib/axolote/axolote.lib"
-    )
-else()
-    set_target_properties(axolote PROPERTIES 
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/lib/axolote/libaxolote.so"
-    )
-endif()
-add_dependencies(axolote glfw)
-add_dependencies(axolote ${ASSIMP_LIB})
+find_package(assimp CONFIG REQUIRED)
+find_package(OpenAL CONFIG REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(axolote REQUIRED)
 
 
 # =-=-=-=-=-=-= DOCS =-=-=-=-=-=-=
@@ -69,7 +45,7 @@ endif (DOXYGEN_FOUND)
 
 
 # =-=-=-=-=-=-= EXECUTABLE =-=-=-=-=-=-=
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Source files
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
@@ -78,27 +54,24 @@ set(
     ${SOURCE_DIR}/app.cpp
     ${SOURCE_DIR}/celestial_body.cpp
     ${SOURCE_DIR}/celestial_body_system.cpp
+    ${SOURCE_DIR}/gravitational_grid.cpp
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/octree.cpp
     ${SOURCE_DIR}/sphere.cpp
+    ${SOURCE_DIR}/utils.cpp
 )
 
 # Adding executables
 add_executable(nbody-simulation ${SOURCE_FILES})
-add_dependencies(nbody-simulation axolote)
 target_compile_definitions(nbody-simulation PUBLIC GLAD_GLAPI_EXPORT)
+target_compile_definitions(nbody-simulation PUBLIC PROJECT_DIR="${CMAKE_SOURCE_DIR}")
 
 # Libraries
-target_link_directories(
-    nbody-simulation
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/external/lib/axolote
-)
 target_link_libraries(
     nbody-simulation
     PRIVATE
-    axolote
-    ${OPENGL_LIBRARIES} glfw ${ASSIMP_LIB}
+    axolote::axolote
+    ${OPENGL_LIBRARIES} glfw assimp::assimp OpenMP::OpenMP_CXX
 )
 
 # Header files
@@ -107,22 +80,13 @@ target_include_directories(
     PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/external/include
-    ${CMAKE_SOURCE_DIR}/external/imgui/include
-    ${ASSIMP_INCLUDE_DIRS}
+    $ENV{HOME}/.local/include/imgui
 )
 
 if (WIN32 OR MSVC)
     add_custom_command(TARGET nbody-simulation POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_RUNTIME_DLLS:nbody-simulation>
-        $<TARGET_FILE_DIR:nbody-simulation>
-        COMMAND_EXPAND_LISTS
-    )
-
-    # Ensure that necessary DLLs are copied to the output directory
-    add_custom_command(TARGET nbody-simulation POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/external/lib/axolote
         $<TARGET_FILE_DIR:nbody-simulation>
         COMMAND_EXPAND_LISTS
     )

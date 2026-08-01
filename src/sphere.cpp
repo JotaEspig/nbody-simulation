@@ -4,11 +4,13 @@
 #include "axolote/model.hpp"
 
 #include "sphere.hpp"
+#include "utils.hpp"
 
 #define UNUSED(x) (void)(x)
 
 Sphere::Sphere() {
-    axolote::Model model{"./resources/models/sphere/sphere.obj"};
+    std::string dir = path("resources/models/sphere/sphere.obj");
+    axolote::Model model(dir);
 
     for (auto &v : model.meshes[0].vertices) {
         _vertices.push_back(v.pos);
@@ -38,12 +40,13 @@ std::vector<std::shared_ptr<axolote::gl::Shader>> Sphere::get_shaders() const {
     return {shader};
 }
 
-void Sphere::update(double dt) {
+void Sphere::update(double absolute_time, double dt) {
+    UNUSED(absolute_time);
     UNUSED(dt);
 }
 
 void Sphere::draw() {
-    shader->activate();
+    shader->use();
     GLsizeiptr size = _indices.size();
     vao->bind();
     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0);

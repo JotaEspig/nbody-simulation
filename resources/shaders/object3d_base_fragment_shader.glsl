@@ -1,9 +1,8 @@
-#version 330 core
+#version 420 core
 
-// Different types of light casters
 struct axolote_PointLight {
     vec3 color;
-    bool is_set;
+    bool is_set; // 4-byte int
     vec3 pos;
     float constant;
     float linear;
@@ -33,177 +32,223 @@ struct axolote_SpotLight {
 out vec4 FragColor;
 
 // Input variables
-in vec4 axolote_color;
-in vec2 axolote_tex_coord;
-in vec3 axolote_normal;
-in vec3 axolote_current_pos;
+in vec4 axolote_in_color;
+in vec2 axolote_in_tex_coord;
+in vec3 axolote_in_normal;
+in vec3 axolote_in_current_pos;
 
 // Object info
-uniform bool axolote_is_affected_by_lights;
-uniform bool axolote_is_affected_by_lights_set;
+uniform bool axolote_object3d_is_affected_by_lights;
+uniform bool axolote_object3d_is_affected_by_lights_set;
 
 // Scene info
 uniform vec3 axolote_camera_pos;
-uniform float axolote_ambient_light;
-uniform float axolote_ambient_light_intensity;
+uniform vec3 axolote_scene_ambient_light;
+uniform float axolote_scene_ambient_light_intensity;
+uniform float axolote_scene_gamma = 1.0f;
+
+// Texture info
+uniform sampler2D axolote_gmesh_diffuse0;
+uniform sampler2D axolote_gmesh_specular0;
+uniform bool axolote_gmesh_is_tex_set;
+uniform bool axolote_gmesh_is_spec_map_set;
 
 // Scene lights
 const int axolote_NUM_MAX_LIGHTS = 50;
-uniform int axolote_num_point_lights;
-uniform int axolote_num_directional_lights;
-uniform int axolote_num_spot_lights;
 
-uniform axolote_PointLight axolote_point_lights[axolote_NUM_MAX_LIGHTS];
-uniform axolote_DirectionalLight axolote_directional_lights[axolote_NUM_MAX_LIGHTS];
-uniform axolote_SpotLight axolote_spot_lights[axolote_NUM_MAX_LIGHTS];
+// TODO use binding point
+layout(std140, binding = 0) uniform AxoloteLightsUBO {
+    axolote_PointLight axolote_scene_point_lights[axolote_NUM_MAX_LIGHTS];
+    // std140 memory layout rules apply here.
+    // For axolote_PointLight (vec3, bool, vec3, float, float, float):
+    //   vec3 color;       // offset 0 (aligned to 16 bytes)
+    //   bool is_set;      // offset 12 (assuming bool is 4 bytes, aligned to 4)
+    //   vec3 pos;         // offset 16 (aligned to 16 bytes)
+    //   float constant;   // offset 28 (aligned to 4 bytes)
+    //   float linear;     // offset 32 (aligned to 4 bytes)
+    //   float quadratic;  // offset 36 (aligned to 4 bytes)
+    // Total size: 40 bytes. Padded to 48 bytes (multiple of largest member alignment, 16).
 
-// Texture info
-uniform sampler2D axolote_diffuse0;
-uniform sampler2D axolote_specular0;
-uniform bool axolote_is_tex_set;
-uniform bool axolote_is_specular_map_set;
+    axolote_DirectionalLight axolote_scene_dir_lights[axolote_NUM_MAX_LIGHTS];
+    // For axolote_DirectionalLight (vec3, bool, vec3, float):
+    //   vec3 color;       // offset 0 (aligned to 16)
+    //   bool is_set;      // offset 12 (aligned to 4)
+    //   vec3 dir;         // offset 16 (aligned to 16)
+    //   float intensity;  // offset 28 (aligned to 4)
+    // Total size: 32 bytes (multiple of 16).
+
+    axolote_SpotLight axolote_scene_spot_lights[axolote_NUM_MAX_LIGHTS];
+    // For axolote_SpotLight (vec3, bool, vec3, vec3, float, float, float, float, float):
+    //   vec3 color;           // offset 0 (aligned to 16)
+    //   bool is_set;          // offset 12 (aligned to 4)
+    //   vec3 pos;             // offset 16 (aligned to 16)
+    //   vec3 dir;             // offset 32 (aligned to 16, next multiple of 16 after pos end)
+    //   float cut_off;       // offset 44 (aligned to 4)
+    //   float outer_cut_off; // offset 48 (aligned to 4)
+    //   float constant;       // offset 52 (aligned to 4)
+    //   float linear;         // offset 56 (aligned to 4)
+    //   float quadratic;      // offset 60 (aligned to 4)
+    // Total size: 64 bytes (multiple of 16).
+
+    // Light counts
+    int axolote_scene_num_point_lights;
+    int axolote_scene_num_dir_lights;
+    int axolote_scene_num_spot_lights;
+};
 
 float axolote_get_specular_map() {
-    if (axolote_is_specular_map_set)
-        return texture(axolote_specular0, axolote_tex_coord).r;
+    if (axolote_gmesh_is_spec_map_set)
+        return texture(axolote_gmesh_specular0, axolote_in_tex_coord).r;
     else
-        return axolote_color.r;
+        return axolote_in_color.r; // Or a default material specular value
 }
 
 vec3 axolote_calculate_point_light(axolote_PointLight light) {
-    vec3 normal = normalize(axolote_normal);
-    vec3 light_direction = normalize(light.pos - axolote_current_pos);
+    vec3 normal = normalize(axolote_in_normal);
+    vec3 light_direction = normalize(light.pos - axolote_in_current_pos);
     float diffuse = max(dot(normal, light_direction), 0.0f);
 
-    float specular_light = 0.25f;
-    vec3 view_direction = normalize(axolote_camera_pos - axolote_current_pos);
-    vec3 reflection_direction = reflect(-light_direction, normal);
-    float spec_amount
-        = pow(max(dot(view_direction, reflection_direction), 0.0f), 16);
-    float specular = spec_amount * specular_light;
+    float specular_strength_factor = 0.25f; // Consider making this a material property
+    vec3 view_direction = normalize(axolote_camera_pos - axolote_in_current_pos);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
+    float spec_amount = pow(max(dot(halfway_direction, normal), 0.0f), 16);
 
-    // Apply attenuation to the light
-    float distance = length(light.pos - axolote_current_pos);
-    float attenuation = 1.0f / (light.constant + light.linear * distance
-                + light.quadratic * distance * distance);
+    float specular = spec_amount * specular_strength_factor;
+
+    float distance = length(light.pos - axolote_in_current_pos);
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * distance * distance);
 
     diffuse *= attenuation;
     specular *= attenuation;
 
-    vec3 diffuse_light_color = light.color.rgb * (diffuse + axolote_ambient_light_intensity);
+    vec3 diffuse_calc = light.color.rgb * diffuse;
+    vec3 specular_calc = light.color.rgb * axolote_get_specular_map() * specular; // Modulate specular by light color too
 
-    float specular_map = axolote_get_specular_map();
-    float specular_light_color = specular_map * specular;
-
-    return (diffuse_light_color + specular_light_color) * light.color.rgb;
+    return diffuse_calc + specular_calc;
 }
 
-vec3 axolote_calculate_directional_light(axolote_DirectionalLight light) {
-    vec3 normal = normalize(axolote_normal);
+vec3 axolote_calculate_point_light_corrected(axolote_PointLight light) {
+    vec3 normal = normalize(axolote_in_normal);
+    vec3 light_dir_frag = light.pos - axolote_in_current_pos;
+    float distance = length(light_dir_frag);
+    vec3 light_direction = light_dir_frag / distance;
+
+    // Diffuse
+    float diff = max(dot(normal, light_direction), 0.0f);
+    vec3 diffuse_contrib = diff * light.color;
+
+    // Specular (Blinn-Phong)
+    float material_shininess = 16.0f; // Could be a uniform/material property
+    float specular_strength = 0.25f; // Could be part of light or material
+    vec3 view_direction = normalize(axolote_camera_pos - axolote_in_current_pos);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
+    float spec = pow(max(dot(normal, halfway_direction), 0.0f), material_shininess);
+    vec3 specular_contrib = specular_strength * spec * light.color * axolote_get_specular_map();
+
+    // Attenuation
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+
+    return attenuation * (diffuse_contrib + specular_contrib);
+}
+
+vec3 axolote_calculate_directional_light_corrected(axolote_DirectionalLight light) {
+    vec3 normal = normalize(axolote_in_normal);
     vec3 light_direction = normalize(-light.dir);
-    float diffuse = max(dot(normal, light_direction), 0.0f);
 
-    float specular_light = 0.25f;
-    vec3 view_direction = normalize(axolote_camera_pos - axolote_current_pos);
-    vec3 reflection_direction = reflect(-light_direction, normal);
-    float spec_amount
-        = pow(max(dot(view_direction, reflection_direction), 0.0f), 16);
-    float specular = spec_amount * specular_light;
+    // Diffuse
+    float diff = max(dot(normal, light_direction), 0.0f);
+    vec3 diffuse_contrib = diff * light.color;
 
-    vec3 diffuse_light_color = light.color.rgb * (diffuse + axolote_ambient_light_intensity);
+    // Specular
+    float material_shininess = 16.0f;
+    float specular_strength = 0.25f;
+    vec3 view_direction = normalize(axolote_camera_pos - axolote_in_current_pos);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
+    float spec = pow(max(dot(normal, halfway_direction), 0.0f), material_shininess);
+    vec3 specular_contrib = specular_strength * spec * light.color * axolote_get_specular_map();
 
-    float specular_map = axolote_get_specular_map();
-    float specular_light_color = specular_map * specular;
-
-    return (diffuse_light_color + specular_light_color) * light.color.rgb * light.intensity;
+    return light.intensity * (diffuse_contrib + specular_contrib);
 }
 
-vec3 axolote_calculate_spot_light(axolote_SpotLight light) {
-    vec3 normal = normalize(axolote_normal);
-    vec3 light_direction = normalize(light.pos - axolote_current_pos);
+vec3 axolote_calculate_spot_light_corrected(axolote_SpotLight light) {
+    vec3 normal = normalize(axolote_in_normal);
+    vec3 light_dir_frag = light.pos - axolote_in_current_pos;
+    float distance = length(light_dir_frag);
+    vec3 light_direction = light_dir_frag / distance; // Normalized
 
-    float diffuse = max(dot(normal, light_direction), 0.0f);
-
-    float specular_light = 0.25f;
-    vec3 view_direction = normalize(axolote_camera_pos - axolote_current_pos);
-    vec3 reflection_direction = reflect(-light_direction, normal);
-    float spec_amount
-        = pow(max(dot(view_direction, reflection_direction), 0.0f), 16);
-    float specular = spec_amount * specular_light;
-
-    // Apply attenuation to the light
-    float distance = length(light.pos - axolote_current_pos);
-    float attenuation = 1.0f / (light.constant + light.linear * distance
-                + light.quadratic * distance * distance);
-
-    diffuse *= attenuation;
-    specular *= attenuation;
-
-    // Apply smooth edges to the spot light
+    // Spotlight Intensity (cutoff)
     float theta = dot(light_direction, normalize(-light.dir));
     float epsilon = light.cut_off - light.outer_cut_off;
-    float intensity = clamp((theta - light.outer_cut_off) / epsilon, 0.0f, 1.0f);
+    float spot_intensity = clamp((theta - light.outer_cut_off) / epsilon, 0.0, 1.0);
+    // If spot_intensity is 0, can early exit
+    if (spot_intensity == 0.0) return vec3(0.0);
 
-    diffuse *= intensity;
-    specular *= intensity;
+    // Diffuse
+    float diff = max(dot(normal, light_direction), 0.0f);
+    vec3 diffuse_contrib = diff * light.color;
 
-    vec3 diffuse_light_color = light.color.rgb * diffuse;
+    // Specular
+    float material_shininess = 16.0f;
+    float specular_strength = 0.25f;
+    vec3 view_direction = normalize(axolote_camera_pos - axolote_in_current_pos);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
+    float spec = pow(max(dot(normal, halfway_direction), 0.0f), material_shininess);
+    vec3 specular_contrib = specular_strength * spec * light.color * axolote_get_specular_map();
 
-    float specular_map = axolote_get_specular_map();
-    float specular_light_color = specular_map * specular;
+    // Attenuation
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    return (diffuse_light_color + specular_light_color) * light.color.rgb;
+    return spot_intensity * attenuation * (diffuse_contrib + specular_contrib);
 }
 
 vec3 axolote_calculate_light() {
-    vec3 color = vec3(0.0f);
+    vec3 total_light_color = vec3(0.0f);
 
     // Point lights
-    for (int i = 0; i < axolote_num_point_lights; ++i) {
-        if (!axolote_point_lights[i].is_set) continue;
-        color += axolote_calculate_point_light(axolote_point_lights[i]);
+    for (int i = 0; i < axolote_scene_num_point_lights; ++i) {
+        if (!axolote_scene_point_lights[i].is_set) continue;
+        total_light_color += axolote_calculate_point_light_corrected(axolote_scene_point_lights[i]);
     }
 
     // Directional lights
-    for (int i = 0; i < axolote_num_directional_lights; ++i) {
-        if (!axolote_directional_lights[i].is_set) continue;
-        color += axolote_calculate_directional_light(axolote_directional_lights[i]);
+    for (int i = 0; i < axolote_scene_num_dir_lights; ++i) {
+        if (!axolote_scene_dir_lights[i].is_set) continue;
+        total_light_color += axolote_calculate_directional_light_corrected(axolote_scene_dir_lights[i]);
     }
 
     // Spot lights
-    for (int i = 0; i < axolote_num_spot_lights; ++i) {
-        if (!axolote_spot_lights[i].is_set) continue;
-        color += axolote_calculate_spot_light(axolote_spot_lights[i]);
+    for (int i = 0; i < axolote_scene_num_spot_lights; ++i) {
+        if (!axolote_scene_spot_lights[i].is_set) continue;
+        total_light_color += axolote_calculate_spot_light_corrected(axolote_scene_spot_lights[i]);
     }
 
-    if (color == vec3(0.0f)) {
-        color = vec3(1.0f) * axolote_ambient_light_intensity;
-    }
-    return color + (axolote_ambient_light * axolote_ambient_light_intensity);
+    vec3 ambient_color = axolote_scene_ambient_light * axolote_scene_ambient_light_intensity;
+    return total_light_color + ambient_color;
 }
 
 void main() {
-    vec4 temp_frag_color = axolote_color;
-    if (axolote_is_tex_set) {
-        temp_frag_color = texture(axolote_diffuse0, axolote_tex_coord);
-        if (temp_frag_color.a < 0.1f) {
+    vec4 base_color = axolote_in_color;
+    if (axolote_gmesh_is_tex_set) {
+        base_color = texture(axolote_gmesh_diffuse0, axolote_in_tex_coord);
+        if (base_color.a < 0.1f) { // Alpha test
             discard;
         }
     }
 
-    bool should_use_light = axolote_num_point_lights
-            + axolote_num_directional_lights
-            + axolote_num_spot_lights > 0;
+    bool should_use_light = (axolote_scene_num_point_lights +
+            axolote_scene_num_dir_lights +
+            axolote_scene_num_spot_lights) > 0;
 
-    // Prevents previous uniform from being used
-    if (axolote_is_affected_by_lights_set)
-        should_use_light = should_use_light && axolote_is_affected_by_lights;
+    if (axolote_object3d_is_affected_by_lights_set) {
+        should_use_light = should_use_light && axolote_object3d_is_affected_by_lights;
+    }
 
+    FragColor = base_color;
     if (should_use_light) {
-        vec3 light_influence_color = axolote_calculate_light();
-        FragColor = temp_frag_color * vec4(light_influence_color, 1.0f);
+        vec3 light_color = axolote_calculate_light();
+        FragColor *= vec4(light_color, 1.0f);
     }
-    else {
-        FragColor = temp_frag_color;
-    }
+
+    // Gamma correction
+    FragColor.rgb = pow(FragColor.rgb, vec3(1.0 / axolote_scene_gamma));
 }
