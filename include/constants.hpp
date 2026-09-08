@@ -29,3 +29,8 @@
 /** Minimum physical collision radius, avoids a zero/near-zero radius sum
  * in mutual_escape_velocity() for extremely low-mass bodies. **/
 #define COLLISION_RADIUS_MIN 1e-3
+/** Minimum mass for the non-merging impulse branch of collide(). Below
+ * this, 1/mass would blow up to infinity/NaN, so such bodies always merge
+ * instead (well below any real body's mass in the shipped configs, e.g.
+ * config/shuriken.json's dust particles are 1e-5). **/
+#define MIN_MASS 1e-9

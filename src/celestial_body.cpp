@@ -105,6 +105,12 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
 }
 
 bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
+    // A body with (near) zero mass has no gravitational standing to resist
+    // capture, and 1/mass in the impulse branch would blow up to
+    // infinity/NaN -- always merge instead.
+    if (mass() <= MIN_MASS || other->mass() <= MIN_MASS)
+        return true;
+
     double dist = glm::distance(pos, other->pos);
     if (dist < COLLISION_EPS)
         return true;
