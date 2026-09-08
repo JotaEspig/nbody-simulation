@@ -90,10 +90,11 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
     // realistic restitution stays well below 1 even far above escape speed.
     double dist = glm::distance(pos, other->pos);
     glm::vec3 n = (pos - other->pos) / (float)dist;
-    double v_n = glm::dot(velocity - other->velocity, n);
-    double v_esc = mutual_escape_velocity(*other);
-    double e
-        = std::sqrt(std::max(0.0, v_n * v_n - v_esc * v_esc)) / std::abs(v_n);
+    glm::vec3 rel_v = velocity - other->velocity;
+    double v_n = glm::dot(rel_v, n);
+    double v_rel2 = glm::dot(rel_v, rel_v);
+    double v_esc = mutual_escape_velocity(*other, dist);
+    double e = std::sqrt(std::max(0.0, v_rel2 - v_esc * v_esc)) / std::abs(v_n);
     e = std::min(e, MAX_RESTITUTION);
 
     double inv_m1 = 1.0 / mass();
@@ -116,17 +117,33 @@ bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
         return true;
 
     glm::vec3 n = (pos - other->pos) / (float)dist;
-    float v_n = glm::dot(velocity - other->velocity, n);
+    glm::vec3 rel_v = velocity - other->velocity;
+    float v_n = glm::dot(rel_v, n);
     if (v_n >= 0.0f)
         return false;
 
-    double v_esc = mutual_escape_velocity(*other);
-    return std::abs(v_n) <= v_esc;
+    // Whether the pair is gravitationally bound (will eventually merge/
+    // orbit) or hyperbolic (will separate to infinity) is a property of
+    // the FULL relative velocity and the ACTUAL current separation --
+    // specific orbital energy, a conserved quantity of two-body motion.
+    // Evaluating it at the true current distance (rather than at the
+    // nominal contact distance, collision_radius() + other.collision_radius())
+    // matters a lot in practice: with this project's large timestep, a
+    // body on a direct head-on infall routinely overshoots past the
+    // nominal contact point before this check ever runs, so its
+    // instantaneous speed there is naturally higher than the escape
+    // velocity *at contact* even though the encounter was bound all
+    // along. Using the actual distance keeps the verdict the same
+    // regardless of how deep the overshoot went.
+    double v_rel2 = glm::dot(rel_v, rel_v);
+    double v_esc = mutual_escape_velocity(*other, dist);
+    return v_rel2 <= v_esc * v_esc;
 }
 
-double CelestialBody::mutual_escape_velocity(const CelestialBody &other) const {
-    double r_sum = collision_radius() + other.collision_radius();
-    return std::sqrt(2.0 * G * (mass() + other.mass()) / r_sum);
+double CelestialBody::mutual_escape_velocity(
+    const CelestialBody &other, double dist
+) const {
+    return std::sqrt(2.0 * G * (mass() + other.mass()) / dist);
 }
 
 double CelestialBody::mass() const {

@@ -74,18 +74,23 @@ public:
      * \brief Checks if two celestial bodies should merge
      * \author João Vitor Espig (JotaEspig)
      * \param other - other celestial body
-     * \returns true if the relative approach speed is at or below the
-     * mutual escape velocity of the two bodies (i.e. they are
-     * gravitationally bound and cannot separate again)
+     * \returns true if the pair's specific orbital energy (using the full
+     * relative velocity and the actual current separation) is negative,
+     * i.e. they are gravitationally bound and cannot separate to infinity
      **/
     bool should_merge(std::shared_ptr<CelestialBody> other) const;
     /**
-     * \brief Computes the mutual (two-body) escape velocity
+     * \brief Computes the mutual (two-body) escape velocity at a given
+     * separation
      * \author João Vitor Espig (JotaEspig)
      * \param other - other celestial body
-     * \returns sqrt(2 * G * (m1 + m2) / (r1 + r2))
+     * \param dist - separation to evaluate the escape velocity at
+     * (typically the bodies' actual current distance, not their nominal
+     * contact distance -- see should_merge())
+     * \returns sqrt(2 * G * (m1 + m2) / dist)
      **/
-    double mutual_escape_velocity(const CelestialBody &other) const;
+    double
+    mutual_escape_velocity(const CelestialBody &other, double dist) const;
     /**
      * \brief mass getter
      * \author João Vitor Espig (JotaEspig)
