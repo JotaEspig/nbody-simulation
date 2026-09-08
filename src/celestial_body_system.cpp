@@ -209,6 +209,21 @@ void CelestialBodySystem::naive_algorithm(double dt) {
             body0->pos += body0->velocity * (float)dt;
         }
     }
+
+    for (auto &body0 : _celestial_bodies) {
+        for (auto &body1 : _celestial_bodies) {
+            if (body0 == body1 || body0->merged || body1->merged)
+                continue;
+            if (body0->is_colliding(*body1))
+                body0->collide(body1);
+        }
+    }
+
+    std::vector<std::shared_ptr<CelestialBody>> active_bodies;
+    for (auto &c : _celestial_bodies)
+        if (!c->merged)
+            active_bodies.push_back(c);
+    _celestial_bodies = std::move(active_bodies);
 }
 
 void CelestialBodySystem::barnes_hut_algorithm(double dt) {

@@ -55,37 +55,67 @@ bool CelestialBody::is_colliding(const CelestialBody &other) const {
 }
 
 void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
-    // If the two bodies are way too close to each other, they are merged
+    // Bodies that are momentarily separating (or exactly co-moving) have
+    // nothing to resolve this frame: gravity will bring them back together
+    // (or apart) on a later frame, at which point this is re-evaluated.
+    double sep_dist = glm::distance(pos, other->pos);
+    if (sep_dist >= COLLISION_EPS) {
+        glm::vec3 sep_n = (pos - other->pos) / (float)sep_dist;
+        if (glm::dot(velocity - other->velocity, sep_n) >= 0.0f)
+            return;
+    }
+
+    // If the two bodies are gravitationally bound at contact, they merge
+    // (perfectly inelastic collision, conserving mass and momentum)
     if (should_merge(other)) {
-        float new_mass = mass() + other->mass();
+        double new_mass = mass() + other->mass();
         pos = (pos * (float)mass() + other->pos * (float)other->mass())
-              / new_mass;
+              / (float)new_mass;
         velocity = (velocity * (float)mass()
                     + other->velocity * (float)other->mass())
-                   / new_mass;
+                   / (float)new_mass;
         set_mass(new_mass);
         other->merged = true;
+        return;
     }
-    else {
-        glm::vec3 dir = glm::normalize(pos - other->pos);
-        float dist = glm::length(pos - other->pos);
 
-        float inv_mass_a = 1 / (mass() + 1);
-        float inv_mass_b = 1 / (other->mass() + 1);
-        float r = (radius() + other->radius()) / 2;
-        glm::vec3 mtd = dir * ((2 * r - dist) * inv_mass_a / (inv_mass_a + inv_mass_b));
-        pos += mtd;
+    // Otherwise, this is a high-energy "hit-and-run" collision: the bodies
+    // exchange momentum via an impulse whose restitution is derived from
+    // how much the impact speed exceeds the mutual escape velocity (0 at
+    // the escape-velocity threshold, approaching 1 far above it), rather
+    // than an arbitrary fixed coefficient.
+    double dist = glm::distance(pos, other->pos);
+    glm::vec3 n = (pos - other->pos) / (float)dist;
+    double v_n = glm::dot(velocity - other->velocity, n);
+    double v_esc = mutual_escape_velocity(*other);
+    double e
+        = std::sqrt(std::max(0.0, v_n * v_n - v_esc * v_esc)) / std::abs(v_n);
 
-        float impact_speed = glm::dot(velocity - other->velocity, dir);
-        glm::vec3 force = dir * (impact_speed * 0.5f);
-        velocity -= force;
-    }
+    double inv_m1 = 1.0 / mass();
+    double inv_m2 = 1.0 / other->mass();
+    double j = -(1.0 + e) * v_n / (inv_m1 + inv_m2);
+
+    velocity += (float)(j * inv_m1) * n;
+    other->velocity -= (float)(j * inv_m2) * n;
 }
 
 bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
-    bool is_massive_enough = std::max(mass(), other->mass()) >= 50.0f;
-    bool is_close_enough = glm::distance(pos, other->pos) < std::max(radius(), other->radius()) * 0.1f;
-    return is_massive_enough || is_close_enough;
+    double dist = glm::distance(pos, other->pos);
+    if (dist < COLLISION_EPS)
+        return true;
+
+    glm::vec3 n = (pos - other->pos) / (float)dist;
+    float v_n = glm::dot(velocity - other->velocity, n);
+    if (v_n >= 0.0f)
+        return false;
+
+    double v_esc = mutual_escape_velocity(*other);
+    return std::abs(v_n) <= v_esc;
+}
+
+double CelestialBody::mutual_escape_velocity(const CelestialBody &other) const {
+    double r_sum = radius() + other.radius();
+    return std::sqrt(2.0 * G * (mass() + other.mass()) / r_sum);
 }
 
 double CelestialBody::mass() const {

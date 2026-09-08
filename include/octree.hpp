@@ -74,8 +74,10 @@ public:
          * \brief Insert a body into the node
          * \author João Vitor Espig (JotaEspig)
          * \param body - celestial body
+         * \param depth - current recursion depth, guards against unbounded
+         * split() recursion for near-coincident bodies
          **/
-        void insert(const std::shared_ptr<CelestialBody> &body);
+        void insert(const std::shared_ptr<CelestialBody> &body, int depth = 0);
         /**
          * \brief split the node into 8 leafs
          * \author João Vitor Espig (JotaEspig)

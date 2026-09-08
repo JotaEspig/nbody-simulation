@@ -10,6 +10,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "celestial_body.hpp"
+#include "constants.hpp"
 #include "octree.hpp"
 
 // ---- OCTREE NODE ----
@@ -22,7 +23,9 @@ OcTree::Node::Node(glm::vec3 cube_start, float width) :
   width{width} {
 }
 
-void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
+void OcTree::Node::insert(
+    const std::shared_ptr<CelestialBody> &body, int depth
+) {
     float m1 = total_mass;
     float m2 = body->mass();
     glm::vec3 x1 = center_of_mass;
@@ -37,11 +40,21 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
         }
         else if (Node::body->is_colliding(*body)) {
             Node::body->collide(body);
+            // body->pos may have been changed by collide()
+            x2 = body->pos;
             if (body->merged) {
                 center_of_mass = Node::body->pos;
                 total_mass += m2;
                 return;
             }
+        }
+
+        if (depth >= MAX_OCTREE_DEPTH) {
+            // Near-coincident bodies that still don't satisfy should_merge():
+            // force accumulation into this node instead of recursing forever.
+            center_of_mass = (m1 * x1 + m2 * x2) / (m1 + m2);
+            total_mass += m2;
+            return;
         }
 
         // split must be the first!
@@ -50,7 +63,7 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
         total_mass += m2;
 
         auto &correct_node = find_correct_child(x2);
-        correct_node->insert(body);
+        correct_node->insert(body, depth + 1);
         return;
     }
 
@@ -58,7 +71,7 @@ void OcTree::Node::insert(const std::shared_ptr<CelestialBody> &body) {
     total_mass += m2;
 
     auto &correct_node = find_correct_child(x2);
-    correct_node->insert(body);
+    correct_node->insert(body, depth + 1);
 }
 
 void OcTree::Node::split() {

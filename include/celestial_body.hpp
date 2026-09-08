@@ -62,17 +62,30 @@ public:
      * \author João Vitor Espig (JotaEspig)
      * \param other - other celestial body
      *
-     * If the two celestial bodies are too close, they are merged
-     * Otherwise, the collision is treated as an "elastic" collision
+     * If the relative approach speed is below the mutual escape velocity,
+     * the two bodies are gravitationally bound at contact and are merged
+     * (perfectly inelastic, conserving mass and momentum). Otherwise, an
+     * impulse is applied that conserves momentum exactly, with a
+     * restitution derived from how much the impact speed exceeds the
+     * mutual escape velocity (see mutual_escape_velocity()).
      **/
     void collide(std::shared_ptr<CelestialBody> other);
     /**
      * \brief Checks if two celestial bodies should merge
      * \author João Vitor Espig (JotaEspig)
      * \param other - other celestial body
-     * \returns true if the two celestial bodies should merge
+     * \returns true if the relative approach speed is at or below the
+     * mutual escape velocity of the two bodies (i.e. they are
+     * gravitationally bound and cannot separate again)
      **/
     bool should_merge(std::shared_ptr<CelestialBody> other) const;
+    /**
+     * \brief Computes the mutual (two-body) escape velocity
+     * \author João Vitor Espig (JotaEspig)
+     * \param other - other celestial body
+     * \returns sqrt(2 * G * (m1 + m2) / (r1 + r2))
+     **/
+    double mutual_escape_velocity(const CelestialBody &other) const;
     /**
      * \brief mass getter
      * \author João Vitor Espig (JotaEspig)
