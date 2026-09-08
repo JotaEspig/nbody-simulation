@@ -13,3 +13,9 @@
 /** Maximum octree recursion depth, guards against unbounded split() recursion
  * **/
 #define MAX_OCTREE_DEPTH 40
+/** Maximum coefficient of restitution for non-merging collisions. Real
+ * rocky/icy bodies dissipate a large fraction of impact energy as heat and
+ * deformation even well above escape velocity, so this stays well below 1
+ * (a perfectly elastic bounce), matching measured restitution values for
+ * hypervelocity rock/ice impacts. **/
+#define MAX_RESTITUTION 0.5

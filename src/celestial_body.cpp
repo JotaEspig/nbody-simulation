@@ -82,14 +82,18 @@ void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
     // Otherwise, this is a high-energy "hit-and-run" collision: the bodies
     // exchange momentum via an impulse whose restitution is derived from
     // how much the impact speed exceeds the mutual escape velocity (0 at
-    // the escape-velocity threshold, approaching 1 far above it), rather
-    // than an arbitrary fixed coefficient.
+    // the escape-velocity threshold, growing above it), capped at
+    // MAX_RESTITUTION. Real rocky/icy bodies never bounce off each other
+    // perfectly elastically, regardless of impact speed -- the material
+    // deforms/fractures and dissipates energy as heat, so a physically
+    // realistic restitution stays well below 1 even far above escape speed.
     double dist = glm::distance(pos, other->pos);
     glm::vec3 n = (pos - other->pos) / (float)dist;
     double v_n = glm::dot(velocity - other->velocity, n);
     double v_esc = mutual_escape_velocity(*other);
     double e
         = std::sqrt(std::max(0.0, v_n * v_n - v_esc * v_esc)) / std::abs(v_n);
+    e = std::min(e, MAX_RESTITUTION);
 
     double inv_m1 = 1.0 / mass();
     double inv_m2 = 1.0 / other->mass();
