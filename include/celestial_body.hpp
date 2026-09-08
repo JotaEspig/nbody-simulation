@@ -103,9 +103,21 @@ public:
     /**
      * \brief radius getter
      * \author João Vitor Espig (JotaEspig)
-     * \returns celestial body radius
+     * \returns celestial body radius (visual/rendering scale, log-compressed
+     * so that huge mass ratios don't dominate the screen)
      **/
     float radius() const;
+    /**
+     * \brief physical collision radius getter
+     * \author João Vitor Espig (JotaEspig)
+     * \returns celestial body's physical radius used for collision
+     * detection and escape-velocity calculations, assuming constant
+     * density (radius ~ mass^(1/3)). Kept separate from radius() because
+     * that one is a log-compressed visual scale unrelated to actual
+     * physical size -- reusing it for collisions would make low-mass
+     * bodies (e.g. dust) have wildly oversized collision cross-sections.
+     **/
+    float collision_radius() const;
     /**
      * \brief color getter
      * \author João Vitor Espig (JotaEspig)
@@ -126,8 +138,10 @@ public:
 protected:
     /** Mass **/
     double _mass;
-    /** Radius **/
+    /** Radius (visual/rendering scale) **/
     float _radius = 1.0f;
+    /** Physical collision radius (mass^(1/3) scale) **/
+    float _collision_radius = 1.0f;
     /** Color **/
     glm::vec3 _color;
 };

@@ -51,7 +51,8 @@ glm::vec3 CelestialBody::calculate_acceleration_vec(
 }
 
 bool CelestialBody::is_colliding(const CelestialBody &other) const {
-    return (_radius + other._radius) > glm::distance(pos, other.pos);
+    return (_collision_radius + other._collision_radius)
+           > glm::distance(pos, other.pos);
 }
 
 void CelestialBody::collide(std::shared_ptr<CelestialBody> other) {
@@ -118,7 +119,7 @@ bool CelestialBody::should_merge(std::shared_ptr<CelestialBody> other) const {
 }
 
 double CelestialBody::mutual_escape_velocity(const CelestialBody &other) const {
-    double r_sum = radius() + other.radius();
+    double r_sum = collision_radius() + other.collision_radius();
     return std::sqrt(2.0 * G * (mass() + other.mass()) / r_sum);
 }
 
@@ -129,10 +130,18 @@ double CelestialBody::mass() const {
 void CelestialBody::set_mass(double mass) {
     _mass = mass;
     _radius = std::max(0.5, std::log2(_mass) / 2.0f);
+    _collision_radius = std::max(
+        (float)COLLISION_RADIUS_MIN,
+        (float)(COLLISION_RADIUS_CONST * std::cbrt(_mass))
+    );
 }
 
 float CelestialBody::radius() const {
     return _radius;
+}
+
+float CelestialBody::collision_radius() const {
+    return _collision_radius;
 }
 
 glm::vec3 CelestialBody::color() const {

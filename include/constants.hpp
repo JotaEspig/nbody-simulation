@@ -19,3 +19,13 @@
  * (a perfectly elastic bounce), matching measured restitution values for
  * hypervelocity rock/ice impacts. **/
 #define MAX_RESTITUTION 0.5
+/** Scale constant for the physical collision radius (radius = k *
+ * mass^(1/3), assuming constant density). Calibrated so a mass of 50 --
+ * the old fixed merge threshold -- gets roughly the same collision radius
+ * the old log-based radius gave it, keeping already-tuned massive-body
+ * collisions roughly unchanged while shrinking low-mass (dust-like) bodies
+ * to a physically-realistic, much smaller cross-section. **/
+#define COLLISION_RADIUS_CONST 0.766
+/** Minimum physical collision radius, avoids a zero/near-zero radius sum
+ * in mutual_escape_velocity() for extremely low-mass bodies. **/
+#define COLLISION_RADIUS_MIN 1e-3
